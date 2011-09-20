@@ -1,0 +1,51 @@
+From 475b35d465d5e31958befe15c681c4d3e06caef9 Mon Sep 17 00:00:00 2001
+From: sgaouaou <sgaouaou@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Mon, 15 Feb 2010 13:42:45 +0000
+Subject: [PATCH] AC'97: Fix bug:
+ 	- no sound was caputre during recording. It was a little-big endian problem.
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@13822 50fbe906-d41e-0410-8a96-31537896a350
+---
+ sound/atmel/ac97c.c |   12 ++++--------
+ 1 files changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/sound/atmel/ac97c.c b/sound/atmel/ac97c.c
+index 20e5378..dad1d2d 100644
+--- a/sound/atmel/ac97c.c
++++ b/sound/atmel/ac97c.c
+@@ -428,7 +428,8 @@ static int atmel_ac97c_capture_prepare(struct snd_pcm_substream *substream)
+ 
+ 	switch (runtime->format) {
+ 	case SNDRV_PCM_FORMAT_S16_LE:
+-		word |= AC97C_CMR_CEM_LITTLE;
++		if (cpu_is_at32ap7000())
++			word |= AC97C_CMR_CEM_LITTLE;
+ 		break;
+ 	case SNDRV_PCM_FORMAT_S16_BE: /* fall through */
+ 		word &= ~(AC97C_CMR_CEM_LITTLE);
+@@ -447,12 +448,7 @@ static int atmel_ac97c_capture_prepare(struct snd_pcm_substream *substream)
+ 	/* Enable channel A event interrupt */
+ 	word = ac97c_readl(chip, IMR);
+ 	word |= AC97C_SR_CAEVT;
+-	ac97c_writel(chip, IER, /*word*/AC97C_SR_CAEVT);
+-
+-	/* Enable channel A event interrupt */
+-	/*word = ac97c_readl(chip, IMR);
+-	word |= AC97C_SR_CAEVT;
+-	ac97c_writel(chip, IER, word);*/
++	ac97c_writel(chip, IER, word);
+ 
+ 	/* set variable rate if needed */
+ 	if (runtime->rate != 48000) {
+@@ -551,7 +547,7 @@ atmel_ac97c_capture_trigger(struct snd_pcm_substream *substream, int cmd)
+ 		} else {
+ 			ptcr = ATMEL_PDC_RXTEN;
+ 		}
+-		camr |= AC97C_CMR_CENA;
++		camr |= AC97C_CMR_CENA | AC97C_CSR_ENDRX;
+ 		break;
+ 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH: /* fall through */
+ 	case SNDRV_PCM_TRIGGER_SUSPEND: /* fall through */
+-- 
+1.5.6.5
+

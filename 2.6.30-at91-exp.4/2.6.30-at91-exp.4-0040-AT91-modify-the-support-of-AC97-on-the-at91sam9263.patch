@@ -1,0 +1,103 @@
+From b59b29bf4086ed863c3853261b24c03adf5f0302 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:45 +0000
+Subject: [PATCH] AT91: modify the support of AC97 on the at91sam9263 ek board
+
+This patch modifies the support of AC97 on the at91sam9263 ek board,
+so it would share the code with AVR32.
+Plus it removes a typo in at91sam9263_devices.c.
+
+Signed-off-by: Sedji Gaouaou <sedji.gaouaou@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11611 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/at91sam9263_devices.c |   12 ++++++------
+ arch/arm/mach-at91/board-sam9263ek.c     |    2 +-
+ arch/arm/mach-at91/include/mach/board.h  |    6 ++----
+ 3 files changed, 9 insertions(+), 11 deletions(-)
+
+diff --git a/arch/arm/mach-at91/at91sam9263_devices.c b/arch/arm/mach-at91/at91sam9263_devices.c
+index e1de2d0..55719a9 100644
+--- a/arch/arm/mach-at91/at91sam9263_devices.c
++++ b/arch/arm/mach-at91/at91sam9263_devices.c
+@@ -707,9 +707,9 @@ void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
+  *  AC97
+  * -------------------------------------------------------------------- */
+ 
+-#if defined(CONFIG_SND_AT91_AC97) || defined(CONFIG_SND_AT91_AC97_MODULE)
++#if defined(CONFIG_SND_ATMEL_AC97C) || defined(CONFIG_SND_ATMEL_AC97C_MODULE)
+ static u64 ac97_dmamask = DMA_BIT_MASK(32);
+-static struct atmel_ac97_data ac97_data;
++static struct ac97c_platform_data ac97_data;
+ 
+ static struct resource ac97_resources[] = {
+ 	[0] = {
+@@ -725,8 +725,8 @@ static struct resource ac97_resources[] = {
+ };
+ 
+ static struct platform_device at91sam9263_ac97_device = {
+-	.name		= "ac97c",
+-	.id		= 1,
++	.name		= "atmel_ac97c",
++	.id		= 0,
+ 	.dev		= {
+ 				.dma_mask		= &ac97_dmamask,
+ 				.coherent_dma_mask	= DMA_BIT_MASK(32),
+@@ -736,7 +736,7 @@ static struct platform_device at91sam9263_ac97_device = {
+ 	.num_resources	= ARRAY_SIZE(ac97_resources),
+ };
+ 
+-void __init at91_add_device_ac97(struct atmel_ac97_data *data)
++void __init at91_add_device_ac97(struct ac97c_platform_data *data)
+ {
+ 	if (!data)
+ 		return;
+@@ -754,7 +754,7 @@ void __init at91_add_device_ac97(struct atmel_ac97_data *data)
+ 	platform_device_register(&at91sam9263_ac97_device);
+ }
+ #else
+-void __init at91_add_device_ac97(struct atmel_ac97_data *data) {}
++void __init at91_add_device_ac97(struct ac97c_platform_data *data) {}
+ #endif
+ 
+ 
+diff --git a/arch/arm/mach-at91/board-sam9263ek.c b/arch/arm/mach-at91/board-sam9263ek.c
+index 258b1aa..4cb1b1c 100644
+--- a/arch/arm/mach-at91/board-sam9263ek.c
++++ b/arch/arm/mach-at91/board-sam9263ek.c
+@@ -366,7 +366,7 @@ static void __init ek_add_device_buttons(void) {}
+ /*
+  * AC97
+  */
+-static struct atmel_ac97_data ek_ac97_data = {
++static struct ac97c_platform_data ek_ac97_data = {
+ 	.reset_pin	= AT91_PIN_PA13,
+ };
+ 
+diff --git a/arch/arm/mach-at91/include/mach/board.h b/arch/arm/mach-at91/include/mach/board.h
+index 9daecc6..d1f1c38 100644
+--- a/arch/arm/mach-at91/include/mach/board.h
++++ b/arch/arm/mach-at91/include/mach/board.h
+@@ -38,6 +38,7 @@
+ #include <linux/spi/spi.h>
+ #include <linux/usb/atmel_usba_udc.h>
+ #include <linux/atmel-mci.h>
++#include <sound/atmel-ac97c.h>
+ 
+  /* USB Device */
+ struct at91_udc_data {
+@@ -180,10 +181,7 @@ struct atmel_lcdfb_info;
+ extern void __init at91_add_device_lcdc(struct atmel_lcdfb_info *data);
+ 
+  /* AC97 */
+-struct atmel_ac97_data {
+-	u8		reset_pin;	/* reset */
+-};
+-extern void __init at91_add_device_ac97(struct atmel_ac97_data *data);
++extern void __init at91_add_device_ac97(struct ac97c_platform_data *data);
+ 
+  /* ISI */
+ extern void __init at91_add_device_isi(void);
+-- 
+1.5.6.5
+

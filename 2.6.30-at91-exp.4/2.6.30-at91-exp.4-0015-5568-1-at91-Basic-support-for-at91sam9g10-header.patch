@@ -1,0 +1,95 @@
+From 05f67011adcd31598260dce2bc9aed335969bd9c Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:27 +0000
+Subject: [PATCH] 5568/1: at91: Basic support for at91sam9g10: header files
+
+AT91sam9g10 is an ARM 926ej-s SOC. It is an evolution of the at91sam9261 with a
+faster clock speed: 266/133MHz.
+
+Here is the basic header file support for this product.
+
+Signed-off-by: Hong Xu <hong.xu@atmel.com>
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+Acked-by: Andrew Victor <linux@maxim.org.za>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+(cherry picked from commit b784b7c03723891876c9053c589150a4062f9455)
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11586 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/include/mach/at91sam9261.h |    3 +++
+ arch/arm/mach-at91/include/mach/cpu.h         |    7 +++++++
+ arch/arm/mach-at91/include/mach/hardware.h    |    2 +-
+ arch/arm/mach-at91/include/mach/timex.h       |    5 +++++
+ 4 files changed, 16 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/mach-at91/include/mach/at91sam9261.h b/arch/arm/mach-at91/include/mach/at91sam9261.h
+index 3a348ca..87de8be 100644
+--- a/arch/arm/mach-at91/include/mach/at91sam9261.h
++++ b/arch/arm/mach-at91/include/mach/at91sam9261.h
+@@ -95,6 +95,9 @@
+ #define AT91SAM9261_SRAM_BASE	0x00300000	/* Internal SRAM base address */
+ #define AT91SAM9261_SRAM_SIZE	0x00028000	/* Internal SRAM size (160Kb) */
+ 
++#define AT91SAM9G10_SRAM_BASE	AT91SAM9261_SRAM_BASE	/* Internal SRAM base address */
++#define AT91SAM9G10_SRAM_SIZE	0x00004000	/* Internal SRAM size (16Kb) */
++
+ #define AT91SAM9261_ROM_BASE	0x00400000	/* Internal ROM base address */
+ #define AT91SAM9261_ROM_SIZE	SZ_32K		/* Internal ROM size (32Kb) */
+ 
+diff --git a/arch/arm/mach-at91/include/mach/cpu.h b/arch/arm/mach-at91/include/mach/cpu.h
+index 64af079..6d8c1b9 100644
+--- a/arch/arm/mach-at91/include/mach/cpu.h
++++ b/arch/arm/mach-at91/include/mach/cpu.h
+@@ -21,6 +21,7 @@
+ #define ARCH_ID_AT91SAM9260	0x019803a0
+ #define ARCH_ID_AT91SAM9261	0x019703a0
+ #define ARCH_ID_AT91SAM9263	0x019607a0
++#define ARCH_ID_AT91SAM9G10	0x819903a0
+ #define ARCH_ID_AT91SAM9G20	0x019905a0
+ #define ARCH_ID_AT91SAM9RL64	0x019b03a0
+ #define ARCH_ID_AT91SAM9G45	0x819b05a0
+@@ -99,6 +100,12 @@ static inline unsigned long at91cap9_rev_identify(void)
+ #define cpu_is_at91sam9261()	(0)
+ #endif
+ 
++#ifdef CONFIG_ARCH_AT91SAM9G10
++#define cpu_is_at91sam9g10()	(at91_cpu_identify() == ARCH_ID_AT91SAM9G10)
++#else
++#define cpu_is_at91sam9g10()	(0)
++#endif
++
+ #ifdef CONFIG_ARCH_AT91SAM9263
+ #define cpu_is_at91sam9263()	(at91_cpu_identify() == ARCH_ID_AT91SAM9263)
+ #else
+diff --git a/arch/arm/mach-at91/include/mach/hardware.h b/arch/arm/mach-at91/include/mach/hardware.h
+index a747d37..3d64a75 100644
+--- a/arch/arm/mach-at91/include/mach/hardware.h
++++ b/arch/arm/mach-at91/include/mach/hardware.h
+@@ -20,7 +20,7 @@
+ #include <mach/at91rm9200.h>
+ #elif defined(CONFIG_ARCH_AT91SAM9260) || defined(CONFIG_ARCH_AT91SAM9G20)
+ #include <mach/at91sam9260.h>
+-#elif defined(CONFIG_ARCH_AT91SAM9261)
++#elif defined(CONFIG_ARCH_AT91SAM9261) || defined(CONFIG_ARCH_AT91SAM9G10)
+ #include <mach/at91sam9261.h>
+ #elif defined(CONFIG_ARCH_AT91SAM9263)
+ #include <mach/at91sam9263.h>
+diff --git a/arch/arm/mach-at91/include/mach/timex.h b/arch/arm/mach-at91/include/mach/timex.h
+index 5abdf73..a83bcc6 100644
+--- a/arch/arm/mach-at91/include/mach/timex.h
++++ b/arch/arm/mach-at91/include/mach/timex.h
+@@ -42,6 +42,11 @@
+ #define AT91SAM9_MASTER_CLOCK	99300000
+ #define CLOCK_TICK_RATE		(AT91SAM9_MASTER_CLOCK/16)
+ 
++#elif defined(CONFIG_ARCH_AT91SAM9G10)
++
++#define AT91SAM9_MASTER_CLOCK	133000000
++#define CLOCK_TICK_RATE		(AT91SAM9_MASTER_CLOCK/16)
++
+ #elif defined(CONFIG_ARCH_AT91SAM9263)
+ 
+ #if defined(CONFIG_MACH_USB_A9263)
+-- 
+1.5.6.5
+

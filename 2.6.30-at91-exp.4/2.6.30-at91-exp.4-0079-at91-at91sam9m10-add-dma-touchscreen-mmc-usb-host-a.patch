@@ -1,0 +1,94 @@
+From 765320b989029ba97be3f1329a8c5eb4f158bae3 Mon Sep 17 00:00:00 2001
+From: pvilchez <pvilchez@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Fri, 8 Jan 2010 15:08:05 +0000
+Subject: [PATCH] at91: at91sam9m10 add dma touchscreen mmc usb host and device support
+
+Signed-off-by: Patrice Vilchez <patrice.vilchez@atmel.com>
+
+
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@13427 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/dma/Kconfig               |    2 +-
+ drivers/input/touchscreen/Kconfig |    2 +-
+ drivers/mmc/host/Kconfig          |    2 +-
+ drivers/usb/Kconfig               |    1 +
+ drivers/usb/gadget/Kconfig        |    4 ++--
+ 5 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/dma/Kconfig b/drivers/dma/Kconfig
+index f38eb33..63db0c4 100644
+--- a/drivers/dma/Kconfig
++++ b/drivers/dma/Kconfig
+@@ -48,7 +48,7 @@ config DW_DMAC
+ 
+ config AT_HDMAC
+ 	tristate "Atmel AHB DMA support"
+-	depends on ARCH_AT91SAM9RL || ARCH_AT91SAM9G45
++	depends on ARCH_AT91SAM9RL || ARCH_AT91SAM9G45 || ARCH_AT91SAM9M10
+ 	select DMA_ENGINE
+ 	help
+ 	  Support the Atmel AHB DMA controller.  This can be integrated in
+diff --git a/drivers/input/touchscreen/Kconfig b/drivers/input/touchscreen/Kconfig
+index 545af53..ab41a4c 100644
+--- a/drivers/input/touchscreen/Kconfig
++++ b/drivers/input/touchscreen/Kconfig
+@@ -277,7 +277,7 @@ config TOUCHSCREEN_TOUCHWIN
+ 
+ config TOUCHSCREEN_ATMEL_TSADCC
+ 	tristate "Atmel Touchscreen Interface"
+-	depends on ARCH_AT91SAM9RL || ARCH_AT91SAM9G45
++	depends on ARCH_AT91SAM9RL || ARCH_AT91SAM9G45 || ARCH_AT91SAM9M10
+ 	default y
+ 	help
+ 	  Say Y here if you have a 4-wire touchscreen connected to the
+diff --git a/drivers/mmc/host/Kconfig b/drivers/mmc/host/Kconfig
+index 7dde378..8908a69 100644
+--- a/drivers/mmc/host/Kconfig
++++ b/drivers/mmc/host/Kconfig
+@@ -152,7 +152,7 @@ endchoice
+ 
+ config MMC_ATMELMCI_DMA
+ 	bool "Atmel MCI DMA support (EXPERIMENTAL)"
+-	depends on MMC_ATMELMCI && (AVR32 || ARCH_AT91SAM9G45) && DMA_ENGINE && EXPERIMENTAL
++	depends on MMC_ATMELMCI && (AVR32 || ARCH_AT91SAM9G45 || ARCH_AT91SAM9M10) && DMA_ENGINE && EXPERIMENTAL
+ 	help
+ 	  Say Y here to have the Atmel MCI driver use a DMA engine to
+ 	  do data transfers and thus increase the throughput and
+diff --git a/drivers/usb/Kconfig b/drivers/usb/Kconfig
+index 3974c9c..4ed57bc 100644
+--- a/drivers/usb/Kconfig
++++ b/drivers/usb/Kconfig
+@@ -58,6 +58,7 @@ config USB_ARCH_HAS_EHCI
+ 	default y if SOC_AU1200
+ 	default y if ARCH_IXP4XX
+ 	default y if ARCH_AT91SAM9G45
++        default y if ARCH_AT91SAM9M10
+ 	default PCI
+ 
+ # ARM SA1111 chips have a non-PCI based "OHCI-compatible" USB host interface.
+diff --git a/drivers/usb/gadget/Kconfig b/drivers/usb/gadget/Kconfig
+index 9beea52..cbf6709 100644
+--- a/drivers/usb/gadget/Kconfig
++++ b/drivers/usb/gadget/Kconfig
+@@ -124,7 +124,7 @@ choice
+ 
+ config USB_GADGET_AT91
+ 	boolean "Atmel AT91 USB Device Port"
+-	depends on ARCH_AT91 && !ARCH_AT91SAM9RL && !ARCH_AT91CAP9 && !ARCH_AT91SAM9G45
++	depends on ARCH_AT91 && !ARCH_AT91SAM9RL && !ARCH_AT91CAP9 && !ARCH_AT91SAM9G45 && !ARCH_AT91SAM9M10
+ 	select USB_GADGET_SELECTED
+ 	help
+ 	   Many Atmel AT91 processors (such as the AT91RM2000) have a
+@@ -143,7 +143,7 @@ config USB_AT91
+ config USB_GADGET_ATMEL_USBA
+ 	boolean "Atmel USBA"
+ 	select USB_GADGET_DUALSPEED
+-	depends on AVR32 || ARCH_AT91CAP9 || ARCH_AT91SAM9RL || ARCH_AT91SAM9G45
++	depends on AVR32 || ARCH_AT91CAP9 || ARCH_AT91SAM9RL || ARCH_AT91SAM9G45 || ARCH_AT91SAM9M10
+ 	help
+ 	  USBA is the integrated high-speed USB Device controller on
+ 	  the AT32AP700x, some AT91SAM9 and AT91CAP9 processors from Atmel.
+-- 
+1.5.6.5
+

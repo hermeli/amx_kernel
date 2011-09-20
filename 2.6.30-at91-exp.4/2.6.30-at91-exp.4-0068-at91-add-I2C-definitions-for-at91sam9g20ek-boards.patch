@@ -1,0 +1,62 @@
+From 8fe7822206063e592112211974f9150b15aa3a44 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:32:05 +0000
+Subject: [PATCH] at91: add I2C definitions for at91sam9g20ek boards
+
+I2C devices definitions for access to eeprom and WM8731
+audio codec.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11639 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/board-sam9g20ek-2slot-mmc.c |    1 +
+ arch/arm/mach-at91/board-sam9g20ek.c           |   13 ++++++++++++-
+ 2 files changed, 13 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9g20ek-2slot-mmc.c b/arch/arm/mach-at91/board-sam9g20ek-2slot-mmc.c
+index bb48f31..4061d82 100644
+--- a/arch/arm/mach-at91/board-sam9g20ek-2slot-mmc.c
++++ b/arch/arm/mach-at91/board-sam9g20ek-2slot-mmc.c
+@@ -289,6 +289,7 @@ static void __init ek_add_device_buttons(void) {}
+ static struct i2c_board_info __initdata ek_i2c_devices[] = {
+ 	{
+ 		I2C_BOARD_INFO("24c512", 0x50),
++		I2C_BOARD_INFO("wm8731", 0x1b),
+ 	},
+ };
+ 
+diff --git a/arch/arm/mach-at91/board-sam9g20ek.c b/arch/arm/mach-at91/board-sam9g20ek.c
+index 2062d7f..b2117b9 100644
+--- a/arch/arm/mach-at91/board-sam9g20ek.c
++++ b/arch/arm/mach-at91/board-sam9g20ek.c
+@@ -269,6 +269,17 @@ static void __init ek_add_device_buttons(void)
+ static void __init ek_add_device_buttons(void) {}
+ #endif
+ 
++/*
++ * I2C
++ */
++static struct i2c_board_info __initdata ek_i2c_devices[] = {
++	{
++		I2C_BOARD_INFO("24c512", 0x50),
++		I2C_BOARD_INFO("wm8731", 0x1b),
++	},
++};
++
++
+ static void __init ek_board_init(void)
+ {
+ 	/* Serial */
+@@ -286,7 +297,7 @@ static void __init ek_board_init(void)
+ 	/* MMC */
+ 	at91_add_device_mmc(0, &ek_mmc_data);
+ 	/* I2C */
+-	at91_add_device_i2c(NULL, 0);
++	at91_add_device_i2c(ek_i2c_devices, ARRAY_SIZE(ek_i2c_devices));
+ 	/* LEDs */
+ 	at91_gpio_leds(ek_leds, ARRAY_SIZE(ek_leds));
+ 	/* Push Buttons */
+-- 
+1.5.6.5
+

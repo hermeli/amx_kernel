@@ -1,0 +1,41 @@
+From cde2c2c36dfc92fd45eda6e7b134924c9a077e11 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Thu, 1 Apr 2010 09:54:21 +0000
+Subject: [PATCH] AT91: at91sam9g10 chip identification changed
+
+A bit in the at91sam9g10 identification number changed between Engineering
+Sample and final product. This patch will identify both as being at91sam9g10.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@14451 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/include/mach/cpu.h |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-at91/include/mach/cpu.h b/arch/arm/mach-at91/include/mach/cpu.h
+index 89e04f9..f8540c6 100644
+--- a/arch/arm/mach-at91/include/mach/cpu.h
++++ b/arch/arm/mach-at91/include/mach/cpu.h
+@@ -21,7 +21,7 @@
+ #define ARCH_ID_AT91SAM9260	0x019803a0
+ #define ARCH_ID_AT91SAM9261	0x019703a0
+ #define ARCH_ID_AT91SAM9263	0x019607a0
+-#define ARCH_ID_AT91SAM9G10	0x819903a0
++#define ARCH_ID_AT91SAM9G10	0x019903a0
+ #define ARCH_ID_AT91SAM9G20	0x019905a0
+ #define ARCH_ID_AT91SAM9RL64	0x019b03a0
+ #define ARCH_ID_AT91SAM9G45	0x819b05a0
+@@ -108,7 +108,7 @@ static inline unsigned long at91cap9_rev_identify(void)
+ #endif
+ 
+ #ifdef CONFIG_ARCH_AT91SAM9G10
+-#define cpu_is_at91sam9g10()	(at91_cpu_identify() == ARCH_ID_AT91SAM9G10)
++#define cpu_is_at91sam9g10()	((at91_cpu_identify() & ~AT91_CIDR_EXT)	== ARCH_ID_AT91SAM9G10)
+ #else
+ #define cpu_is_at91sam9g10()	(0)
+ #endif
+-- 
+1.5.6.5
+

@@ -1,0 +1,95 @@
+From fb1a89af4412416fa3e98fcadccaa852b61b06c6 Mon Sep 17 00:00:00 2001
+From: pvilchez <pvilchez@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Fri, 8 Jan 2010 15:11:18 +0000
+Subject: [PATCH] at91: at91sam9m10 add video decoder clock
+
+Signed-off-by: Patrice Vilchez <patrice.vilchez@atmel.com>
+
+
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@13428 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/at91sam9g45.c        |   11 +++++++++++
+ arch/arm/mach-at91/board-sam9m10g45ek.c |    2 +-
+ arch/arm/mach-at91/clock.c              |    9 ---------
+ 3 files changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/arch/arm/mach-at91/at91sam9g45.c b/arch/arm/mach-at91/at91sam9g45.c
+index 85166b7..aec9ef7 100644
+--- a/arch/arm/mach-at91/at91sam9g45.c
++++ b/arch/arm/mach-at91/at91sam9g45.c
+@@ -20,6 +20,7 @@
+ #include <mach/at91_pmc.h>
+ #include <mach/at91_rstc.h>
+ #include <mach/at91_shdwc.h>
++#include <mach/cpu.h>
+ 
+ #include "generic.h"
+ #include "clock.h"
+@@ -176,6 +177,13 @@ static struct clk mmc1_clk = {
+ 	.type		= CLK_TYPE_PERIPHERAL,
+ };
+ 
++/* Video decoder clock - Only for sam9m10 */
++static struct clk vdec_clk = {
++	.name		= "vdec_clk",
++	.pmc_mask	= 1 << AT91SAM9G45_ID_VDEC,
++	.type		= CLK_TYPE_PERIPHERAL,
++};
++
+ /* One additional fake clock for ohci */
+ static struct clk ohci_clk = {
+ 	.name		= "ohci_clk",
+@@ -239,6 +247,9 @@ static void __init at91sam9g45_register_clocks(void)
+ 	for (i = 0; i < ARRAY_SIZE(periph_clocks); i++)
+ 		clk_register(periph_clocks[i]);
+ 
++	if(cpu_is_at91sam9m10())
++		clk_register(&vdec_clk);
++
+ 	clk_register(&pck0);
+ 	clk_register(&pck1);
+ }
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 0f80e72..61a8076 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -236,7 +236,7 @@ static struct fb_monspecs at91fb_default_monspecs = {
+ /* Driver datas */
+ static struct atmel_lcdfb_info __initdata ek_lcdc_data = {
+ 	.lcdcon_is_backlight		= true,
+-	.default_bpp			= 32,
++	.default_bpp			= 16,
+ 	.default_dmacon			= ATMEL_LCDC_DMAEN,
+ 	.default_lcdcon2		= AT91SAM9G45_DEFAULT_LCDCON2,
+ 	.default_monspecs		= &at91fb_default_monspecs,
+diff --git a/arch/arm/mach-at91/clock.c b/arch/arm/mach-at91/clock.c
+index 12cb3a0..7558626 100644
+--- a/arch/arm/mach-at91/clock.c
++++ b/arch/arm/mach-at91/clock.c
+@@ -127,12 +127,6 @@ static struct clk pllb = {
+ 	.type		= CLK_TYPE_PRIMARY | CLK_TYPE_PLL,
+ };
+ 
+-static struct clk vdec_clk = {
+-	.name		= "vdec_clk",
+-	.pmc_mask	= 1 << AT91SAM9G45_ID_VDEC,
+-	.type		= CLK_TYPE_PERIPHERAL,
+-};
+-
+ static void pmc_sys_mode(struct clk *clk, int is_on)
+ {
+ 	if (is_on)
+@@ -777,9 +771,6 @@ int __init at91_clock_init(unsigned long main_clock)
+ 	for (i = 0; i < ARRAY_SIZE(standard_pmc_clocks); i++)
+ 		list_add_tail(&standard_pmc_clocks[i]->node, &clocks);
+ 
+-	if(cpu_is_at91sam9m10())
+-		list_add_tail(&vdec_clk.node, &clocks);
+-
+ 	if (cpu_has_pllb())
+ 		list_add_tail(&pllb.node, &clocks);
+ 
+-- 
+1.5.6.5
+

@@ -1,0 +1,46 @@
+From 06a5d038a80c215bcb312582e1a8c01280f69aa5 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:57 +0000
+Subject: [PATCH] input: atmel_tsadcc: report fake pressure measure
+
+For compatibility to former tslib, we introduce a fake pressure report to input
+layer.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11627 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/input/touchscreen/atmel_tsadcc.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/input/touchscreen/atmel_tsadcc.c b/drivers/input/touchscreen/atmel_tsadcc.c
+index 3c24783..27ac912 100644
+--- a/drivers/input/touchscreen/atmel_tsadcc.c
++++ b/drivers/input/touchscreen/atmel_tsadcc.c
+@@ -134,6 +134,7 @@ static irqreturn_t atmel_tsadcc_interrupt(int irq, void *dev)
+ 
+ 		input_report_key(input_dev, BTN_TOUCH, 0);
+ 		ts_dev->bufferedmeasure = 0;
++		input_report_abs(input_dev, ABS_PRESSURE, 0);
+ 		input_sync(input_dev);
+ 
+ 	} else if (status & ATMEL_TSADCC_PENCNT) {
+@@ -158,6 +159,7 @@ static irqreturn_t atmel_tsadcc_interrupt(int irq, void *dev)
+ 			input_report_abs(input_dev, ABS_X, ts_dev->prev_absx);
+ 			input_report_abs(input_dev, ABS_Y, ts_dev->prev_absy);
+ 			input_report_key(input_dev, BTN_TOUCH, 1);
++			input_report_abs(input_dev, ABS_PRESSURE, 7500);
+ 			input_sync(input_dev);
+ 		} else
+ 			ts_dev->bufferedmeasure = 1;
+@@ -256,6 +258,7 @@ static int __devinit atmel_tsadcc_probe(struct platform_device *pdev)
+ 	__set_bit(EV_ABS, input_dev->evbit);
+ 	input_set_abs_params(input_dev, ABS_X, 0, 0x3FF, 0, 0);
+ 	input_set_abs_params(input_dev, ABS_Y, 0, 0x3FF, 0, 0);
++	input_set_abs_params(input_dev, ABS_PRESSURE, 0, 15000, 0, 0);
+ 
+ 	input_set_capability(input_dev, EV_KEY, BTN_TOUCH);
+ 
+-- 
+1.5.6.5
+

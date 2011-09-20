@@ -1,0 +1,155 @@
+From 2e55d7a62af67e62b21157079325a522bb721d15 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:37 +0000
+Subject: [PATCH] atmel-mci: Unified Atmel MCI drivers (AVR32 & AT91)
+
+Unification of the atmel-mci driver to support the AT91 processors MCI
+interface.  The atmel-mci driver currently supports the AVR32 and this patch
+adds AT91 support.
+Add read/write proof selection switch dependent on chip availability of this
+feature.
+
+To use this new driver on a at91 the platform driver for your board needs to
+updated.
+
+Signed-off-by: Rob Emanuele <rob@emanuele.us>
+[nicolas.ferre@atmel.com indent, Kconfig comment and one printk modification]
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11600 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/mmc/host/Kconfig     |   16 ++++++++++++----
+ drivers/mmc/host/atmel-mci.c |   33 ++++++++++++++++++++++++++++++---
+ 2 files changed, 42 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/mmc/host/Kconfig b/drivers/mmc/host/Kconfig
+index b4cf691..e779049 100644
+--- a/drivers/mmc/host/Kconfig
++++ b/drivers/mmc/host/Kconfig
+@@ -124,6 +124,12 @@ config MMC_AU1X
+ 
+ 	  If unsure, say N.
+ 
++choice
++	prompt "Atmel SD/MMC Driver"
++	default MMC_ATMELMCI if AVR32
++	help
++	  Choose which driver to use for the Atmel MCI Silicon
++
+ config MMC_AT91
+ 	tristate "AT91 SD/MMC Card Interface support"
+ 	depends on ARCH_AT91
+@@ -134,17 +140,19 @@ config MMC_AT91
+ 
+ config MMC_ATMELMCI
+ 	tristate "Atmel Multimedia Card Interface support"
+-	depends on AVR32
++	depends on AVR32 || ARCH_AT91
+ 	help
+ 	  This selects the Atmel Multimedia Card Interface driver. If
+-	  you have an AT32 (AVR32) platform with a Multimedia Card
+-	  slot, say Y or M here.
++	  you have an AT32 (AVR32) or AT91 platform with a Multimedia
++	  Card slot, say Y or M here.
+ 
+ 	  If unsure, say N.
+ 
++endchoice
++
+ config MMC_ATMELMCI_DMA
+ 	bool "Atmel MCI DMA support (EXPERIMENTAL)"
+-	depends on MMC_ATMELMCI && DMA_ENGINE && EXPERIMENTAL
++	depends on MMC_ATMELMCI && AVR32 && DMA_ENGINE && EXPERIMENTAL
+ 	help
+ 	  Say Y here to have the Atmel MCI driver use a DMA engine to
+ 	  do data transfers and thus increase the throughput and
+diff --git a/drivers/mmc/host/atmel-mci.c b/drivers/mmc/host/atmel-mci.c
+index cf6a100..2b4d855 100644
+--- a/drivers/mmc/host/atmel-mci.c
++++ b/drivers/mmc/host/atmel-mci.c
+@@ -30,6 +30,7 @@
+ #include <asm/io.h>
+ #include <asm/unaligned.h>
+ 
++#include <mach/cpu.h>
+ #include <mach/board.h>
+ 
+ #include "atmel-mci-regs.h"
+@@ -208,6 +209,18 @@ struct atmel_mci_slot {
+ 	set_bit(event, &host->pending_events)
+ 
+ /*
++ * Enable or disable features/registers based on
++ * whether the processor supports them
++ */
++static bool mci_has_rwproof(void)
++{
++	if (cpu_is_at91sam9261() || cpu_is_at91rm9200())
++		return false;
++	else
++		return true;
++}
++
++/*
+  * The debugfs stuff below is mostly optimized away when
+  * CONFIG_DEBUG_FS is not set.
+  */
+@@ -274,8 +287,13 @@ static void atmci_show_status_reg(struct seq_file *s,
+ 		[3]	= "BLKE",
+ 		[4]	= "DTIP",
+ 		[5]	= "NOTBUSY",
++		[6]	= "ENDRX",
++		[7]	= "ENDTX",
+ 		[8]	= "SDIOIRQA",
+ 		[9]	= "SDIOIRQB",
++		[12]	= "SDIOWAIT",
++		[14]	= "RXBUFF",
++		[15]	= "TXBUFE",
+ 		[16]	= "RINDE",
+ 		[17]	= "RDIRE",
+ 		[18]	= "RCRCE",
+@@ -283,6 +301,11 @@ static void atmci_show_status_reg(struct seq_file *s,
+ 		[20]	= "RTOE",
+ 		[21]	= "DCRCE",
+ 		[22]	= "DTOE",
++		[23]	= "CSTOE",
++		[24]	= "BLKOVRE",
++		[25]	= "DMADONE",
++		[26]	= "FIFOEMPTY",
++		[27]	= "XFRDONE",
+ 		[30]	= "OVRE",
+ 		[31]	= "UNRE",
+ 	};
+@@ -847,13 +870,15 @@ static void atmci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+ 			clkdiv = 255;
+ 		}
+ 
++		host->mode_reg = MCI_MR_CLKDIV(clkdiv);
++
+ 		/*
+ 		 * WRPROOF and RDPROOF prevent overruns/underruns by
+ 		 * stopping the clock when the FIFO is full/empty.
+ 		 * This state is not expected to last for long.
+ 		 */
+-		host->mode_reg = MCI_MR_CLKDIV(clkdiv) | MCI_MR_WRPROOF
+-					| MCI_MR_RDPROOF;
++		if (mci_has_rwproof())
++			host->mode_reg |= (MCI_MR_WRPROOF | MCI_MR_RDPROOF);
+ 
+ 		if (list_empty(&host->queue))
+ 			mci_writel(host, MR, host->mode_reg);
+@@ -1642,8 +1667,10 @@ static int __init atmci_probe(struct platform_device *pdev)
+ 			nr_slots++;
+ 	}
+ 
+-	if (!nr_slots)
++	if (!nr_slots) {
++		dev_err(&pdev->dev, "init failed: no slot defined\n");
+ 		goto err_init_slot;
++	}
+ 
+ 	dev_info(&pdev->dev,
+ 			"Atmel MCI controller at 0x%08lx irq %d, %u slots\n",
+-- 
+1.5.6.5
+

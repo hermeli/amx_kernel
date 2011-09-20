@@ -1,0 +1,112 @@
+From e7035127767c5f996f8f69d021b7436d9fb2dd56 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:31 +0000
+Subject: [PATCH] at91/USB: at91sam9g45 series USB host integration
+
+This is the at91 specific part of USB host integration. The EHCI high speed
+controller has a companion OHCI controller to manage USB full and low speed.
+They are sharing the same IRQ line and vbus pin.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11592 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/at91sam9g45_devices.c |   56 ++++++++++++++++++++++++++++++
+ arch/arm/mach-at91/board-sam9m10g45ek.c  |    1 +
+ arch/arm/mach-at91/include/mach/board.h  |    1 +
+ 3 files changed, 58 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/mach-at91/at91sam9g45_devices.c b/arch/arm/mach-at91/at91sam9g45_devices.c
+index d746e86..c2ecbb6 100644
+--- a/arch/arm/mach-at91/at91sam9g45_devices.c
++++ b/arch/arm/mach-at91/at91sam9g45_devices.c
+@@ -83,6 +83,62 @@ void __init at91_add_device_usbh_ohci(struct at91_usbh_data *data) {}
+ 
+ 
+ /* --------------------------------------------------------------------
++ *  USB Host HS (EHCI)
++ *  Needs an OHCI host for low and full speed management
++ * -------------------------------------------------------------------- */
++
++#if defined(CONFIG_USB_EHCI_HCD) || defined(CONFIG_USB_EHCI_HCD_MODULE)
++static u64 ehci_dmamask = DMA_BIT_MASK(32);
++static struct at91_usbh_data usbh_ehci_data;
++
++static struct resource usbh_ehci_resources[] = {
++	[0] = {
++		.start	= AT91SAM9G45_EHCI_BASE,
++		.end	= AT91SAM9G45_EHCI_BASE + SZ_1M - 1,
++		.flags	= IORESOURCE_MEM,
++	},
++	[1] = {
++		.start	= AT91SAM9G45_ID_UHPHS,
++		.end	= AT91SAM9G45_ID_UHPHS,
++		.flags	= IORESOURCE_IRQ,
++	},
++};
++
++static struct platform_device at91_usbh_ehci_device = {
++	.name		= "atmel-ehci",
++	.id		= -1,
++	.dev		= {
++				.dma_mask		= &ehci_dmamask,
++				.coherent_dma_mask	= DMA_BIT_MASK(32),
++				.platform_data		= &usbh_ehci_data,
++	},
++	.resource	= usbh_ehci_resources,
++	.num_resources	= ARRAY_SIZE(usbh_ehci_resources),
++};
++
++void __init at91_add_device_usbh_ehci(struct at91_usbh_data *data)
++{
++	int i;
++
++	if (!data)
++		return;
++
++	/* Enable VBus control for UHP ports */
++	for (i = 0; i < data->ports; i++) {
++		if (data->vbus_pin[i])
++			at91_set_gpio_output(data->vbus_pin[i], 0);
++	}
++
++	usbh_ehci_data = *data;
++	at91_clock_associate("uhphs_clk", &at91_usbh_ehci_device.dev, "ehci_clk");
++	platform_device_register(&at91_usbh_ehci_device);
++}
++#else
++void __init at91_add_device_usbh_ehci(struct at91_usbh_data *data) {}
++#endif
++
++
++/* --------------------------------------------------------------------
+  *  USB HS Device (Gadget)
+  * -------------------------------------------------------------------- */
+ 
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index b8558ea..d7251b7 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -358,6 +358,7 @@ static void __init ek_board_init(void)
+ 	at91_add_device_serial();
+ 	/* USB HS Host */
+ 	at91_add_device_usbh_ohci(&ek_usbh_hs_data);
++	at91_add_device_usbh_ehci(&ek_usbh_hs_data);
+ 	/* USB HS Device */
+ 	at91_add_device_usba(&ek_usba_udc_data);
+ 	/* SPI */
+diff --git a/arch/arm/mach-at91/include/mach/board.h b/arch/arm/mach-at91/include/mach/board.h
+index 2115e6f..ce31746 100644
+--- a/arch/arm/mach-at91/include/mach/board.h
++++ b/arch/arm/mach-at91/include/mach/board.h
+@@ -92,6 +92,7 @@ struct at91_usbh_data {
+ };
+ extern void __init at91_add_device_usbh(struct at91_usbh_data *data);
+ extern void __init at91_add_device_usbh_ohci(struct at91_usbh_data *data);
++extern void __init at91_add_device_usbh_ehci(struct at91_usbh_data *data);
+ 
+  /* NAND / SmartMedia */
+ struct atmel_nand_data {
+-- 
+1.5.6.5
+

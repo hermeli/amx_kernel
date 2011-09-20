@@ -1,0 +1,50 @@
+From 8f7b9973c9c3543207371648e391febaf3b127e8 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Mon, 10 May 2010 12:03:46 +0000
+Subject: [PATCH] at91_udc HW glitch
+
+Add some delay to avoid reading CSR TXCOUNT too early after updating it.
+
+For more info about this HW glitch see:
+http://lists.arm.linux.org.uk/lurker/message/20090325.150843.f515c02f.en.html
+http://lists.infradead.org/pipermail/linux-arm-kernel/attachments/20100129/10ba0f8b/attachment.el
+http://lists.infradead.org/pipermail/linux-arm-kernel/attachments/20100203/09cdb3b4/attachment.el
+http://lists.infradead.org/pipermail/linux-arm-kernel/attachments/20100203/08b5b249/attachment.el
+
+First applied: "Fix soft lockup in at91 udc driver"
+http://www.arm.linux.org.uk/developer/patches/viewpatch.php?id=5965
+
+Signed-off-by: Anti Sullin <(address hidden)>
+Signed-off-by: Harro Haan <(address hidden)>
+Acked-by: Remy Bohmer <(address hidden)>
+
+PATCH 5966/1
+
+
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@14957 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/usb/gadget/at91_udc.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/usb/gadget/at91_udc.c b/drivers/usb/gadget/at91_udc.c
+index fc13ad5..6f6167f 100644
+--- a/drivers/usb/gadget/at91_udc.c
++++ b/drivers/usb/gadget/at91_udc.c
+@@ -366,6 +366,13 @@ rescan:
+ 	if (is_done)
+ 		done(ep, req, 0);
+ 	else if (ep->is_pingpong) {
++		/*
++		 * One dummy read to delay the code because of a HW glitch:
++		 * CSR returns bad RXCOUNT when read too soon after updating
++		 * RX_DATA_BK flags.
++		 */
++		csr = __raw_readl(creg);
++
+ 		bufferspace -= count;
+ 		buf += count;
+ 		goto rescan;
+-- 
+1.5.6.5
+

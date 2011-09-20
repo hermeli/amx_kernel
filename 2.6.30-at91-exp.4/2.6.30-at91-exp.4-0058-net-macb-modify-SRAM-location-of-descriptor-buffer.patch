@@ -1,0 +1,33 @@
+From 61d994a3953e0c2f0c7d4c794206107e14b6a294 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:58 +0000
+Subject: [PATCH] net: macb: modify SRAM location of descriptor buffers for 9xe chips
+
+At91sam9xe chips have internal FLASH instead of SRAM at first address. We can't
+locate macb descriptor buffers in this location. Instead put them in the
+alternative location.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11629 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/net/macb.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/net/macb.c b/drivers/net/macb.c
+index 8bfe99a..d637702 100644
+--- a/drivers/net/macb.c
++++ b/drivers/net/macb.c
+@@ -740,7 +740,8 @@ static int macb_alloc_consistent(struct macb *bp)
+ 
+ #if defined(CONFIG_ARCH_AT91) && defined(CONFIG_MACB_TX_SRAM)
+ #if  defined(CONFIG_ARCH_AT91SAM9260)
+-	if (request_mem_region(AT91SAM9260_SRAM0_BASE, TX_DMA_SIZE, "macb")) {
++	if (!cpu_is_at91sam9xe()
++	&& request_mem_region(AT91SAM9260_SRAM0_BASE, TX_DMA_SIZE, "macb")) {
+ 		bp->tx_ring_dma = AT91SAM9260_SRAM0_BASE;
+ 	} else {
+ 		if (request_mem_region(AT91SAM9260_SRAM1_BASE, TX_DMA_SIZE, "macb")) {
+-- 
+1.5.6.5
+

@@ -1,0 +1,45 @@
+From 5eb1026a6148d3ea207b3fdf33b2eef8152819f5 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:26 +0000
+Subject: [PATCH] 5567/1: at91: Support for at91sam9g10: clocks management
+
+Add the at91sam9g10 support to the AT91 generic clock file. It takes
+advantage of the management by functionalities of those PLLs and clocks.
+
+Signed-off-by: Hong Xu <hong.xu@atmel.com>
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+Acked-by: Andrew Victor <linux@maxim.org.za>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11585 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/clock.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-at91/clock.c b/arch/arm/mach-at91/clock.c
+index b83bfad..7558626 100644
+--- a/arch/arm/mach-at91/clock.c
++++ b/arch/arm/mach-at91/clock.c
+@@ -54,7 +54,7 @@
+ #define cpu_has_800M_plla()	(  cpu_is_at91sam9g20() \
+ 				|| cpu_is_at91sam9g45())
+ 
+-#define cpu_has_300M_plla()	(0)
++#define cpu_has_300M_plla()	(cpu_is_at91sam9g10())
+ 
+ #define cpu_has_pllb()		(!(cpu_is_at91sam9rl() \
+ 				|| cpu_is_at91sam9g45()))
+@@ -644,7 +644,9 @@ static void __init at91_pllb_usbfs_clock_init(unsigned long main_clock)
+ 		uhpck.pmc_mask = AT91RM9200_PMC_UHP;
+ 		udpck.pmc_mask = AT91RM9200_PMC_UDP;
+ 		at91_sys_write(AT91_PMC_SCER, AT91RM9200_PMC_MCKUDP);
+-	} else if (cpu_is_at91sam9260() || cpu_is_at91sam9261() || cpu_is_at91sam9263() || cpu_is_at91sam9g20() || cpu_is_at572d940hf()) {
++	} else if (cpu_is_at91sam9260() || cpu_is_at91sam9261() ||
++		   cpu_is_at91sam9263() || cpu_is_at91sam9g20() ||
++		   cpu_is_at572d940hf() || cpu_is_at91sam9g10()) {
+ 		uhpck.pmc_mask = AT91SAM926x_PMC_UHP;
+ 		udpck.pmc_mask = AT91SAM926x_PMC_UDP;
+ 	} else if (cpu_is_at91cap9()) {
+-- 
+1.5.6.5
+

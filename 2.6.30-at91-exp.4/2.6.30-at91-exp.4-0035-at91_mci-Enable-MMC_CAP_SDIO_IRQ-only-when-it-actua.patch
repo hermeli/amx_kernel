@@ -1,0 +1,47 @@
+From 1a740790f1284b8077f0c6ece7b98d5047f2f2b4 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:41 +0000
+Subject: [PATCH] at91_mci: Enable MMC_CAP_SDIO_IRQ only when it actually works.
+
+According to the datasheets AT91SAM9261 does not support
+SDIO interrupts, and AT91SAM9260/9263 have an erratum
+requiring 4bit mode while using slot B for the interrupt
+to work.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11606 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/mmc/host/at91_mci.c |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/mmc/host/at91_mci.c b/drivers/mmc/host/at91_mci.c
+index 9b333b9..d881d27 100644
+--- a/drivers/mmc/host/at91_mci.c
++++ b/drivers/mmc/host/at91_mci.c
+@@ -1007,7 +1007,7 @@ static int __init at91_mci_probe(struct platform_device *pdev)
+ 	mmc->f_min = 375000;
+ 	mmc->f_max = 25000000;
+ 	mmc->ocr_avail = MMC_VDD_32_33 | MMC_VDD_33_34;
+-	mmc->caps = MMC_CAP_SDIO_IRQ;
++	mmc->caps = 0;
+ 
+ 	mmc->max_blk_size = 4095;
+ 	mmc->max_blk_count = mmc->max_req_size;
+@@ -1025,6 +1025,13 @@ static int __init at91_mci_probe(struct platform_device *pdev)
+ 				" - using 1 wire\n");
+ 	}
+ 
++	/* Add SDIO capability when available */
++	if (cpu_is_at91sam9260() || cpu_is_at91sam9263()) {
++		/* AT91SAM9260/9263 erratum */
++		if (host->board->wire4 || !host->board->slot_b)
++			mmc->caps |= MMC_CAP_SDIO_IRQ;
++	}
++
+ 	/*
+ 	 * Reserve GPIOs ... board init code makes sure these pins are set
+ 	 * up as GPIOs with the right direction (input, except for vcc)
+-- 
+1.5.6.5
+

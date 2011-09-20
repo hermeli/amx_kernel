@@ -1,0 +1,37 @@
+From a4f8f67d564c4670d07525a1e9dd703325c13a06 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Mon, 19 Oct 2009 13:59:01 +0000
+Subject: [PATCH] at91: update at91sam9rlek_defconfig
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11689 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/configs/at91sam9rlek_defconfig |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/configs/at91sam9rlek_defconfig b/arch/arm/configs/at91sam9rlek_defconfig
+index 3e6fba6..f6e9345 100644
+--- a/arch/arm/configs/at91sam9rlek_defconfig
++++ b/arch/arm/configs/at91sam9rlek_defconfig
+@@ -525,7 +525,7 @@ CONFIG_BLK_DEV_LOOP=y
+ # CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+-CONFIG_BLK_DEV_RAM_COUNT=8
++CONFIG_BLK_DEV_RAM_COUNT=4
+ CONFIG_BLK_DEV_RAM_SIZE=8192
+ # CONFIG_BLK_DEV_XIP is not set
+ # CONFIG_CDROM_PKTCDVD is not set
+@@ -717,7 +717,7 @@ CONFIG_SERIAL_CORE_CONSOLE=y
+ CONFIG_UNIX98_PTYS=y
+ # CONFIG_DEVPTS_MULTIPLE_INSTANCES is not set
+ CONFIG_LEGACY_PTYS=y
+-CONFIG_LEGACY_PTY_COUNT=16
++CONFIG_LEGACY_PTY_COUNT=4
+ # CONFIG_IPMI_HANDLER is not set
+ CONFIG_HW_RANDOM=y
+ # CONFIG_HW_RANDOM_TIMERIOMEM is not set
+-- 
+1.5.6.5
+

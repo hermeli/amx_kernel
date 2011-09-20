@@ -1,0 +1,37 @@
+From 2007f9e7c5debef2df870664a7e892f18a35f8ba Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:48 +0000
+Subject: [PATCH] input: atmel_tsadcc: touchscreen rework setting capabilities
+
+Tiny patch for setting capabilities using input API function.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11615 50fbe906-d41e-0410-8a96-31537896a350
+---
+ drivers/input/touchscreen/atmel_tsadcc.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/input/touchscreen/atmel_tsadcc.c b/drivers/input/touchscreen/atmel_tsadcc.c
+index 055969e..36a4f5f 100644
+--- a/drivers/input/touchscreen/atmel_tsadcc.c
++++ b/drivers/input/touchscreen/atmel_tsadcc.c
+@@ -242,12 +242,12 @@ static int __devinit atmel_tsadcc_probe(struct platform_device *pdev)
+ 	input_dev->phys = ts_dev->phys;
+ 	input_dev->dev.parent = &pdev->dev;
+ 
+-	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+-	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
+-
++	__set_bit(EV_ABS, input_dev->evbit);
+ 	input_set_abs_params(input_dev, ABS_X, 0, 0x3FF, 0, 0);
+ 	input_set_abs_params(input_dev, ABS_Y, 0, 0x3FF, 0, 0);
+ 
++	input_set_capability(input_dev, EV_KEY, BTN_TOUCH);
++
+ 	/* clk_enable() always returns 0, no need to check it */
+ 	clk_enable(ts_dev->clk);
+ 
+-- 
+1.5.6.5
+

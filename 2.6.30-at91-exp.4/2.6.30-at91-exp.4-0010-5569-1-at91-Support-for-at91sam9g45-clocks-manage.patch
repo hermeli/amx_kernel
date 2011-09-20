@@ -1,0 +1,154 @@
+From e0490c5300f12e886b89224bb41f03ffff02de04 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:23 +0000
+Subject: [PATCH] 5569/1: at91: Support for at91sam9g45: clocks management
+
+Add the at91sam9g45 series support to the AT91 generic clock file.
+This takes care of the particularities of the PMC for this series.
+It also takes advantage of the management by functionalities of
+those PLLs and clocks.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+Acked-by: Andrew Victor <linux@maxim.org.za>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11581 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/clock.c |   61 +++++++++++++++++++++++++++++++++++++------
+ 1 files changed, 52 insertions(+), 9 deletions(-)
+
+diff --git a/arch/arm/mach-at91/clock.c b/arch/arm/mach-at91/clock.c
+index c09148c..b83bfad 100644
+--- a/arch/arm/mach-at91/clock.c
++++ b/arch/arm/mach-at91/clock.c
+@@ -48,20 +48,25 @@
+  * Chips have some kind of clocks : group them by functionality
+  */
+ #define cpu_has_utmi()		(  cpu_is_at91cap9() \
+-				|| cpu_is_at91sam9rl())
++				|| cpu_is_at91sam9rl() \
++				|| cpu_is_at91sam9g45())
+ 
+-#define cpu_has_800M_plla()	(cpu_is_at91sam9g20())
++#define cpu_has_800M_plla()	(  cpu_is_at91sam9g20() \
++				|| cpu_is_at91sam9g45())
+ 
+-#define cpu_has_pllb()		(!cpu_is_at91sam9rl())
++#define cpu_has_300M_plla()	(0)
+ 
+-#define cpu_has_upll()		(0)
++#define cpu_has_pllb()		(!(cpu_is_at91sam9rl() \
++				|| cpu_is_at91sam9g45()))
++
++#define cpu_has_upll()		(cpu_is_at91sam9g45())
+ 
+ /* USB host HS & FS */
+ #define cpu_has_uhp()		(!cpu_is_at91sam9rl())
+ 
+ /* USB device FS only */
+-#define cpu_has_udpfs()		(!cpu_is_at91sam9rl())
+-
++#define cpu_has_udpfs()		(!(cpu_is_at91sam9rl() \
++				|| cpu_is_at91sam9g45()))
+ 
+ static LIST_HEAD(clocks);
+ static DEFINE_SPINLOCK(clk_lock);
+@@ -134,6 +139,13 @@ static void pmc_uckr_mode(struct clk *clk, int is_on)
+ {
+ 	unsigned int uckr = at91_sys_read(AT91_CKGR_UCKR);
+ 
++	if (cpu_is_at91sam9g45()) {
++		if (is_on)
++			uckr |= AT91_PMC_BIASEN;
++		else
++			uckr &= ~AT91_PMC_BIASEN;
++	}
++
+ 	if (is_on) {
+ 		is_on = AT91_PMC_LOCKU;
+ 		at91_sys_write(AT91_CKGR_UCKR, uckr | clk->pmc_mask);
+@@ -328,6 +340,7 @@ long clk_round_rate(struct clk *clk, unsigned long rate)
+ 	unsigned long	flags;
+ 	unsigned	prescale;
+ 	unsigned long	actual;
++	unsigned long	prev = ULONG_MAX;
+ 
+ 	if (!clk_is_programmable(clk))
+ 		return -EINVAL;
+@@ -335,8 +348,16 @@ long clk_round_rate(struct clk *clk, unsigned long rate)
+ 
+ 	actual = clk->parent->rate_hz;
+ 	for (prescale = 0; prescale < 7; prescale++) {
+-		if (actual && actual <= rate)
++		if (actual > rate)
++			prev = actual;
++
++		if (actual && actual <= rate) {
++			if ((prev - rate) < (rate - actual)) {
++				actual = prev;
++				prescale--;
++			}
+ 			break;
++		}
+ 		actual >>= 1;
+ 	}
+ 
+@@ -391,6 +412,10 @@ int clk_set_parent(struct clk *clk, struct clk *parent)
+ 		return -EBUSY;
+ 	if (!clk_is_primary(parent) || !clk_is_programmable(clk))
+ 		return -EINVAL;
++
++	if (cpu_is_at91sam9rl() && parent->id == AT91_PMC_CSS_PLLB)
++		return -EINVAL;
++
+ 	spin_lock_irqsave(&clk_lock, flags);
+ 
+ 	clk->rate_hz = parent->rate_hz;
+@@ -655,6 +680,7 @@ int __init at91_clock_init(unsigned long main_clock)
+ {
+ 	unsigned tmp, freq, mckr;
+ 	int i;
++	int pll_overclock = false;
+ 
+ 	/*
+ 	 * When the bootloader initialized the main oscillator correctly,
+@@ -672,10 +698,24 @@ int __init at91_clock_init(unsigned long main_clock)
+ 
+ 	/* report if PLLA is more than mildly overclocked */
+ 	plla.rate_hz = at91_pll_rate(&plla, main_clock, at91_sys_read(AT91_CKGR_PLLAR));
+-	if ((!cpu_has_800M_plla() && plla.rate_hz > 209000000)
+-	   || (cpu_has_800M_plla() && plla.rate_hz > 800000000))
++	if (cpu_has_300M_plla()) {
++		if (plla.rate_hz > 300000000)
++			pll_overclock = true;
++	} else if (cpu_has_800M_plla()) {
++		if (plla.rate_hz > 800000000)
++			pll_overclock = true;
++	} else {
++		if (plla.rate_hz > 209000000)
++			pll_overclock = true;
++	}
++	if (pll_overclock)
+ 		pr_info("Clocks: PLLA overclocked, %ld MHz\n", plla.rate_hz / 1000000);
+ 
++	if (cpu_is_at91sam9g45()) {
++		mckr = at91_sys_read(AT91_PMC_MCKR);
++		plla.rate_hz /= (1 << ((mckr & AT91_PMC_PLLADIV2) >> 12));	/* plla divisor by 2 */
++	}
++
+ 	if (cpu_has_upll() && !cpu_has_pllb()) {
+ 		/* setup UTMI clock as the fourth primary clock
+ 		 * (instead of pllb) */
+@@ -718,6 +758,9 @@ int __init at91_clock_init(unsigned long main_clock)
+ 			freq / ((mckr & AT91_PMC_MDIV) >> 7) : freq;	/* mdiv ; (x >> 7) = ((x >> 8) * 2) */
+ 		if (mckr & AT91_PMC_PDIV)
+ 			freq /= 2;		/* processor clock division */
++	} else if (cpu_is_at91sam9g45()) {
++		mck.rate_hz = (mckr & AT91_PMC_MDIV) == AT91SAM9_PMC_MDIV_3 ?
++			freq / 3 : freq / (1 << ((mckr & AT91_PMC_MDIV) >> 8));	/* mdiv */
+ 	} else {
+ 		mck.rate_hz = freq / (1 << ((mckr & AT91_PMC_MDIV) >> 8));      /* mdiv */
+ 	}
+-- 
+1.5.6.5
+

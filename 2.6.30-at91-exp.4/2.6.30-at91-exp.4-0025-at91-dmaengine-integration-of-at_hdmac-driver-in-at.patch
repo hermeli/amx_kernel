@@ -1,0 +1,89 @@
+From ef10a05b2428efd6aec57542e5d3e6495866b8d2 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:34 +0000
+Subject: [PATCH] at91/dmaengine: integration of at_hdmac driver in at91sam9rl
+
+This is the integration of DMA engine driver into at91sam9rl device file. The
+associated driver is at_hdmac.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+(cherry picked from commit 3ea448c18c48fc0442a5ad15eb14163e09fe0d51)
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11596 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/at91sam9rl_devices.c |   47 +++++++++++++++++++++++++++++++
+ 1 files changed, 47 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/mach-at91/at91sam9rl_devices.c b/arch/arm/mach-at91/at91sam9rl_devices.c
+index 7281865..1c2dced 100644
+--- a/arch/arm/mach-at91/at91sam9rl_devices.c
++++ b/arch/arm/mach-at91/at91sam9rl_devices.c
+@@ -21,11 +21,57 @@
+ #include <mach/at91sam9rl.h>
+ #include <mach/at91sam9rl_matrix.h>
+ #include <mach/at91sam9_smc.h>
++#include <mach/at_hdmac.h>
+ 
+ #include "generic.h"
+ 
+ 
+ /* --------------------------------------------------------------------
++ *  HDMAC - AHB DMA Controller
++ * -------------------------------------------------------------------- */
++
++#if defined(CONFIG_AT_HDMAC) || defined(CONFIG_AT_HDMAC_MODULE)
++static u64 hdmac_dmamask = DMA_BIT_MASK(32);
++
++static struct at_dma_platform_data atdma_pdata = {
++	.nr_channels	= 2,
++};
++
++static struct resource hdmac_resources[] = {
++	[0] = {
++		.start	= AT91_BASE_SYS + AT91_DMA,
++		.end	= AT91_BASE_SYS + AT91_DMA + SZ_512 - 1,
++		.flags	= IORESOURCE_MEM,
++	},
++	[2] = {
++		.start	= AT91SAM9RL_ID_DMA,
++		.end	= AT91SAM9RL_ID_DMA,
++		.flags	= IORESOURCE_IRQ,
++	},
++};
++
++static struct platform_device at_hdmac_device = {
++	.name		= "at_hdmac",
++	.id		= -1,
++	.dev		= {
++				.dma_mask		= &hdmac_dmamask,
++				.coherent_dma_mask	= DMA_BIT_MASK(32),
++				.platform_data		= &atdma_pdata,
++	},
++	.resource	= hdmac_resources,
++	.num_resources	= ARRAY_SIZE(hdmac_resources),
++};
++
++void __init at91_add_device_hdmac(void)
++{
++	dma_cap_set(DMA_MEMCPY, atdma_pdata.cap_mask);
++	platform_device_register(&at_hdmac_device);
++}
++#else
++void __init at91_add_device_hdmac(void) {}
++#endif
++
++/* --------------------------------------------------------------------
+  *  USB HS Device (Gadget)
+  * -------------------------------------------------------------------- */
+ 
+@@ -1103,6 +1149,7 @@ void __init at91_add_device_serial(void) {}
+  */
+ static int __init at91_add_standard_devices(void)
+ {
++	at91_add_device_hdmac();
+ 	at91_add_device_rtc();
+ 	at91_add_device_rtt();
+ 	at91_add_device_watchdog();
+-- 
+1.5.6.5
+

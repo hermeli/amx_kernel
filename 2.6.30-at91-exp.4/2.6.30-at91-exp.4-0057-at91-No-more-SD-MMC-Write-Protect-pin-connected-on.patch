@@ -1,0 +1,34 @@
+From b89093f368ba4a45a83d771aa97e1d91bd71fb47 Mon Sep 17 00:00:00 2001
+From: nferre <nferre@50fbe906-d41e-0410-8a96-31537896a350>
+Date: Wed, 14 Oct 2009 13:31:57 +0000
+Subject: [PATCH] at91: No more SD/MMC Write-Protect pin connected on at91sam9263ek
+
+A change in board design rev.B and onwards make the Write-Protect pin disappear
+from schematics. Keeping pin assignment in SD/MMC interface definition results
+in mounting the card in read-only mode.
+We choose to remove this definition, even for rev.A as it will not disturb
+people as much as always mounting an SD card read-only.
+
+Signed-off-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+
+git-svn-id: svn://rfolxts01.rfo.atmel.com/at91_sandbox/linux-2.6.x/branches/linux-2.6.30-at91@11628 50fbe906-d41e-0410-8a96-31537896a350
+---
+ arch/arm/mach-at91/board-sam9263ek.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9263ek.c b/arch/arm/mach-at91/board-sam9263ek.c
+index dd3f093..7cbec96 100644
+--- a/arch/arm/mach-at91/board-sam9263ek.c
++++ b/arch/arm/mach-at91/board-sam9263ek.c
+@@ -155,7 +155,7 @@ static struct spi_board_info ek_spi_devices[] = {
+ static struct at91_mmc_data __initdata ek_mmc_data = {
+ 	.wire4		= 1,
+ 	.det_pin	= AT91_PIN_PE18,
+-	.wp_pin		= AT91_PIN_PE19,
++//	.wp_pin		= ... not connected
+ //	.vcc_pin	= ... not connected
+ };
+ 
+-- 
+1.5.6.5
+
