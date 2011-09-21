@@ -115,6 +115,10 @@ int ledout_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsig
 			writel(OUT2_GREEN, (drvMsg.out2&GREEN)?memBase+PIO_SODR:memBase+PIO_CODR);
 			writel(OUT3_RED, (drvMsg.out3&RED)?memBase+PIO_SODR:memBase+PIO_CODR);
 			writel(OUT3_GREEN, (drvMsg.out3&GREEN)?memBase+PIO_SODR:memBase+PIO_CODR);
+			break;
+
+		default:
+			return -EFAULT;
 	}
 	return 0;
 }
