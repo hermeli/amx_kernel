@@ -5,6 +5,12 @@ menu "Atmel AT91 System-on-Chip"
 choice
 	prompt "Atmel AT91 Processor"
 
+config ARCH_AMM
+	bool "AMM"
+	select CPU_ARM926T
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+
 config ARCH_AT91RM9200
 	bool "AT91RM9200"
 	select CPU_ARM920T
@@ -192,6 +198,19 @@ config MACH_YL9200
 	depends on ARCH_AT91RM9200
 	help
 	  Select this if you are using the ucDragon YL-9200 board.
+
+endif
+
+#-----------------------------------------------------------
+if ARCH_AMM
+
+comment "AMM Variants"
+
+config ARCH_AMM_STANDARD
+	bool "AMM Standard"
+	depends on ARCH_AMM
+	help 
+	  Select this if you ar using KABA's Access Manager MIFARE.
 
 endif
 

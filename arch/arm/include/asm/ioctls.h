@@ -46,6 +46,8 @@
 #define TIOCSBRK	0x5427  /* BSD compatibility */
 #define TIOCCBRK	0x5428  /* BSD compatibility */
 #define TIOCGSID	0x5429  /* Return the session ID of FD */
+#define TIOCSRS485	0x5430	
+
 #define TCGETS2		_IOR('T',0x2A, struct termios2)
 #define TCSETS2		_IOW('T',0x2B, struct termios2)
 #define TCSETSW2	_IOW('T',0x2C, struct termios2)

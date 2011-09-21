@@ -786,7 +786,7 @@ int __init at91_clock_init(unsigned long main_clock)
 	/* MCK and CPU clock are "always on" */
 	clk_enable(&mck);
 
-	printk("Clocks: CPU %u MHz, master %u MHz, main %u.%03u MHz\n",
+	printk("<0>Clocks: CPU %u MHz, master %u MHz, main %u.%03u MHz\n",
 		freq / 1000000, (unsigned) mck.rate_hz / 1000000,
 		(unsigned) main_clock / 1000000,
 		((unsigned) main_clock % 1000000) / 1000);

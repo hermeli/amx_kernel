@@ -1020,8 +1020,8 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	/* Get current mode register */
 	mode = UART_GET_MR(port) & ~(ATMEL_US_USCLKS | ATMEL_US_CHRL
-					| ATMEL_US_NBSTOP | ATMEL_US_PAR
-					| ATMEL_US_USMODE);
+					| ATMEL_US_NBSTOP | ATMEL_US_PAR);
+					//| ATMEL_US_USMODE);
 
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
 	quot = uart_get_divisor(port, baud);
@@ -1066,8 +1066,11 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 	} else
 		mode |= ATMEL_US_PAR_NONE;
 
-	/* hardware handshake (RTS/CTS) */
-	if (termios->c_cflag & CRTSCTS)
+	/* hardware handshake (RTS/CTS & RS485) 
+	   AMM specific code: enable RS485 mode */	
+	if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US0) {		
+		mode |= ATMEL_US_USMODE_RS485;
+	} else if (termios->c_cflag & CRTSCTS)
 		mode |= ATMEL_US_USMODE_HWHS;
 	else
 		mode |= ATMEL_US_USMODE_NORMAL;
@@ -1115,13 +1118,26 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 	/* disable receiver and transmitter */
 	UART_PUT_CR(port, ATMEL_US_TXDIS | ATMEL_US_RXDIS);
 
-	/* set the parity, stop bits and data size */
-	UART_PUT_MR(port, mode);
-
 	/* set the baud rate */
-	UART_PUT_BRGR(port, quot);
+	if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {		
+		// if AVR port, set 83333 baud
+		printk("<0>Set 83'333 baud for AVR port ttyS4\n");
+		
+		// USART3 Mode Register (9Bits,1Stop)
+		mode = ATMEL_US_USMODE_NORMAL|ATMEL_US_USCLKS_MCK|ATMEL_US_CHRL_8
+			| ATMEL_US_MODE9|ATMEL_US_OVER
+			| ATMEL_US_PAR_NONE|ATMEL_US_NBSTOP_1|ATMEL_US_CHMODE_NORMAL;
+
+		UART_PUT_BRGR(port, 135);
+	} else {
+		UART_PUT_BRGR(port, quot);
+	}
+	
 	UART_PUT_CR(port, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
 	UART_PUT_CR(port, ATMEL_US_TXEN | ATMEL_US_RXEN);
+
+	/* set the parity, stop bits and data size */
+	UART_PUT_MR(port, mode);
 
 	/* restore interrupts */
 	UART_PUT_IER(port, imr);
@@ -1278,7 +1294,7 @@ static void __devinit atmel_init_port(struct atmel_uart_port *atmel_port,
 	atmel_port->use_dma_rx = data->use_dma_rx;
 	atmel_port->use_dma_tx = data->use_dma_tx;
 	if (atmel_use_dma_tx(port))
-		port->fifosize = PDC_BUFFER_SIZE;
+		port->fifosize = PDC_BUFFER_SIZE;	
 }
 
 /*

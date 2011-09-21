@@ -51,19 +51,25 @@
 
 static void __init ek_map_io(void)
 {
-	/* Initialize processor: 18.432 MHz crystal */
-	at91sam9260_initialize(18432000);
+	/* Initialize processor: 25.000 MHz crystal */
+	at91sam9260_initialize(25000000);
 
-	/* DGBU on ttyS0. (Rx & Tx only) */
+	/* DGBU / ttyS0. (Rx & Tx only) */
 	at91_register_uart(0, 0, 0);
 
-	/* USART0 on ttyS1. (Rx, Tx, CTS, RTS, DTR, DSR, DCD, RI) */
+	/* RS485 / ID0 / ttyS1. (Rx, Tx, CTS, RTS, DTR, DSR, DCD, RI) */
 	at91_register_uart(AT91SAM9260_ID_US0, 1, ATMEL_UART_CTS | ATMEL_UART_RTS
 			   | ATMEL_UART_DTR | ATMEL_UART_DSR | ATMEL_UART_DCD
 			   | ATMEL_UART_RI);
 
-	/* USART1 on ttyS2. (Rx, Tx, RTS, CTS) */
+	/* COMA / ID1 / ttyS2. (Rx, Tx, RTS, CTS) */
 	at91_register_uart(AT91SAM9260_ID_US1, 2, ATMEL_UART_CTS | ATMEL_UART_RTS);
+
+	/* COMB / ID2 / ttyS3. (Rx, Tx, RTS, CTS) */
+	at91_register_uart(AT91SAM9260_ID_US2, 3, ATMEL_UART_CTS | ATMEL_UART_RTS);
+
+	/* AVR / ID3 / ttyS4. (AVR 9bit) */
+	at91_register_uart(AT91SAM9260_ID_US3, 4, 0); 
 
 	/* set serial console to ttyS0 (ie, DBGU) */
 	at91_set_serial_console(0);
@@ -168,14 +174,15 @@ static struct spi_board_info ek_spi_devices[] = {
  */
 static struct at91_eth_data __initdata ek_macb_data = {
 	.phy_irq_pin	= AT91_PIN_PA7,
-	.is_rmii	= 1,
+	.is_rmii	= 0,
 };
 
 
 /*
- * NAND flash
+ * NOR flash
  */
-static struct mtd_partition __initdata ek_nand_partition[] = {
+
+static struct mtd_partition __initdata ek_nor_partition[] = {
 	{
 		.name	= "Partition 1",
 		.offset	= 0,
@@ -188,27 +195,18 @@ static struct mtd_partition __initdata ek_nand_partition[] = {
 	},
 };
 
-static struct mtd_partition * __init nand_partitions(int size, int *num_partitions)
+static struct mtd_partition * __init nor_partitions(int size, int *num_partitions)
 {
-	*num_partitions = ARRAY_SIZE(ek_nand_partition);
-	return ek_nand_partition;
+	*num_partitions = ARRAY_SIZE(ek_nor_partition);
+	return ek_nor_partition;
 }
 
-static struct atmel_nand_data __initdata ek_nand_data = {
-	.ale		= 21,
-	.cle		= 22,
-//	.det_pin	= ... not connected
-	.rdy_pin	= AT91_PIN_PC13,
-	.enable_pin	= AT91_PIN_PC14,
-	.partition_info	= nand_partitions,
-#if defined(CONFIG_MTD_NAND_ATMEL_BUSWIDTH_16)
+static struct atmel_nor_data __initdata ek_nor_data = {
+	.partition_info	= nor_partitions,
 	.bus_width_16	= 1,
-#else
-	.bus_width_16	= 0,
-#endif
 };
 
-static struct sam9_smc_config __initdata ek_nand_smc_config = {
+static struct sam9_smc_config __initdata ek_nor_smc_config = {
 	.ncs_read_setup		= 0,
 	.nrd_setup		= 1,
 	.ncs_write_setup	= 0,
@@ -226,18 +224,10 @@ static struct sam9_smc_config __initdata ek_nand_smc_config = {
 	.tdf_cycles		= 2,
 };
 
-static void __init ek_add_device_nand(void)
+static void __init ek_add_device_nor(void)
 {
-	/* setup bus-width (8 or 16) */
-	if (ek_nand_data.bus_width_16)
-		ek_nand_smc_config.mode |= AT91_SMC_DBW_16;
-	else
-		ek_nand_smc_config.mode |= AT91_SMC_DBW_8;
-
-	/* configure chip-select 3 (NAND) */
-	sam9_smc_configure(3, &ek_nand_smc_config);
-
-	at91_add_device_nand(&ek_nand_data);
+	ek_nor_smc_config.mode |= AT91_SMC_DBW_16;
+	at91_add_device_nor(&ek_nor_data);
 }
 
 
@@ -307,7 +297,7 @@ static struct gpio_keys_button ek_buttons[] = {
 		.desc		= "Button 4",
 		.active_low	= 1,
 		.wakeup		= 1,
-	}
+	}e
 };
 
 static struct gpio_keys_platform_data ek_button_data = {
@@ -348,8 +338,8 @@ static void __init ek_board_init(void)
 	at91_add_device_udc(&ek_udc_data);
 	/* SPI */
 	at91_add_device_spi(ek_spi_devices, ARRAY_SIZE(ek_spi_devices));
-	/* NAND */
-	ek_add_device_nand();
+	/* NOR */
+	ek_add_device_nor();
 	/* Ethernet */
 	at91_add_device_eth(&ek_macb_data);
 	/* MMC */

@@ -4,6 +4,13 @@
 
 menu "Character devices"
 
+config LEDOUT
+	tristate "Enable LEDOUT driver for AMM"
+	default M
+	---help---
+	The AMM has 3 relais outputs (OUT1..OUT3), a State LED and 3 Output
+	LED's which can be controlled by this LEDOUT driver. 
+
 config VT
 	bool "Virtual terminal" if EMBEDDED
 	depends on !S390

@@ -100,18 +100,12 @@ extern void __init at91_add_device_usbh(struct at91_usbh_data *data);
 extern void __init at91_add_device_usbh_ohci(struct at91_usbh_data *data);
 extern void __init at91_add_device_usbh_ehci(struct at91_usbh_data *data);
 
- /* NAND / SmartMedia */
-struct atmel_nand_data {
-	u8		enable_pin;	/* chip enable */
-	u8		det_pin;	/* card detect */
-	u8		rdy_pin;	/* ready/busy */
-	u8              rdy_pin_active_low;     /* rdy_pin value is inverted */
-	u8		ale;		/* address line number connected to ALE */
-	u8		cle;		/* address line number connected to CLE */
+ /* NOR */
+struct atmel_nor_data {
 	u8		bus_width_16;	/* buswidth is 16 bit */
 	struct mtd_partition* (*partition_info)(int, int*);
 };
-extern void __init at91_add_device_nand(struct atmel_nand_data *data);
+extern void __init at91_add_device_nor(struct atmel_nor_data *data);
 
  /* I2C*/
 #if defined(CONFIG_ARCH_AT91SAM9G45) || defined(CONFIG_ARCH_AT91SAM9M10)
