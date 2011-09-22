@@ -688,7 +688,7 @@ static struct platform_device at91sam9260_spi1_device = {
 	.num_resources	= ARRAY_SIZE(spi1_resources),
 };
 
-static const unsigned spi1_standard_cs[4] = { AT91_PIN_PB3, AT91_PIN_PC5, AT91_PIN_PC4, AT91_PIN_PC3 };
+static const unsigned spi1_standard_cs[4] = { AT91_PIN_PB3, AT91_PIN_PC18, AT91_PIN_PC19, AT91_PIN_PC20 };
 
 void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 {
@@ -730,6 +730,7 @@ void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 		platform_device_register(&at91sam9260_spi0_device);
 	}
 	if (enable_spi1) {
+		/* swyss: passthrough checked */
 		at91_set_A_periph(AT91_PIN_PB0, 0);	/* SPI1_MISO */
 		at91_set_A_periph(AT91_PIN_PB1, 0);	/* SPI1_MOSI */
 		at91_set_A_periph(AT91_PIN_PB2, 0);	/* SPI1_SPCK */

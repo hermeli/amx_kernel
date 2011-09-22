@@ -140,24 +140,17 @@ static void __init at73c213_set_clk(struct at73c213_board_info *info) {}
  * SPI devices.
  */
 static struct spi_board_info ek_spi_devices[] = {
-#if !defined(CONFIG_MMC_AT91)
-	{	/* DataFlash chip */
-		.modalias	= "mtd_dataflash",
-		.chip_select	= 1,
-		.max_speed_hz	= 15 * 1000 * 1000,
-		.bus_num	= 0,
+
+	{ 	/* RTC chip */ 
+		.modalias	= "rtc-max6902",
+		.chip_select	= 2,
+		.max_speed_hz 	= 15 * 1000 * 1000,
+		.bus_num	= 1,
 	},
-#if defined(CONFIG_MTD_AT91_DATAFLASH_CARD)
-	{	/* DataFlash card */
-		.modalias	= "mtd_dataflash",
-		.chip_select	= 0,
-		.max_speed_hz	= 15 * 1000 * 1000,
-		.bus_num	= 0,
-	},
-#endif
-#endif
+
+/*
 #if defined(CONFIG_SND_AT73C213) || defined(CONFIG_SND_AT73C213_MODULE)
-	{	/* AT73C213 DAC */
+	{	AT73C213 DAC 		
 		.modalias	= "at73c213",
 		.chip_select	= 0,
 		.max_speed_hz	= 10 * 1000 * 1000,
@@ -166,6 +159,7 @@ static struct spi_board_info ek_spi_devices[] = {
 		.platform_data	= &at73c213_data,
 	},
 #endif
+*/
 };
 
 
