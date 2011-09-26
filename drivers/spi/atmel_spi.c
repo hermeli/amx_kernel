@@ -118,7 +118,14 @@ static void cs_activate(struct atmel_spi *as, struct spi_device *spi)
 		spi_writel(as, MR, SPI_BF(PCS, 0x0e) | SPI_BIT(MODFDIS)
 				| SPI_BIT(MSTR));
 		mr = spi_readl(as, MR);
-		gpio_set_value(asd->npcs_pin, active);
+
+		/* SW: IC8/OC8 strategy is : set CS lines with external driver 
+		   and do not set CS lines here at all */
+		if (spi->master->bus_num == 0){
+			return;
+		} else {
+			gpio_set_value(asd->npcs_pin, active);
+		}
 	} else {
 		u32 cpol = (spi->mode & SPI_CPOL) ? SPI_BIT(CPOL) : 0;
 		int i;
@@ -163,8 +170,16 @@ static void cs_deactivate(struct atmel_spi *as, struct spi_device *spi)
 			asd->npcs_pin, active ? " (low)" : "",
 			mr);
 
-	if (atmel_spi_is_v2() || spi->chip_select != 0)
-		gpio_set_value(asd->npcs_pin, !active);
+	if (atmel_spi_is_v2() || spi->chip_select != 0){
+		
+		/* SW: IC8/OC8 strategy is : set CS lines with external driver 
+		   and do not handle cs_activate here at all */
+		if (spi->master->bus_num == 0){
+			return;
+		} else {
+			gpio_set_value(asd->npcs_pin, !active);
+		}
+	}
 }
 
 static inline int atmel_spi_xfer_is_last(struct spi_message *msg,
@@ -186,7 +201,7 @@ static void atmel_spi_next_xfer_data(struct spi_master *master,
 {
 	struct atmel_spi	*as = spi_master_get_devdata(master);
 	u32			len = *plen;
-
+	
 	/* use scratch buffer only when rx or tx data is unspecified */
 	if (xfer->rx_buf)
 		*rx_dma = xfer->rx_dma + xfer->len - len;
@@ -682,10 +697,12 @@ static int atmel_spi_transfer(struct spi_device *spi, struct spi_message *msg)
 			return -EINVAL;
 		}
 
-		/* FIXME implement these protocol options!! */
+		/* FIXME implement these protocol options!! */		
 		if (xfer->bits_per_word || xfer->speed_hz) {
 			dev_dbg(&spi->dev, "no protocol options yet\n");
-			return -ENOPROTOOPT;
+			
+			/* SW: instead of reporting an error, we use the default protocol options */
+			// return -ENOPROTOOPT;
 		}
 
 		/*

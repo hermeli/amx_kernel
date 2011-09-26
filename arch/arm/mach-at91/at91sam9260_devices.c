@@ -724,13 +724,12 @@ void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 	if (enable_spi0) {
 		at91_set_A_periph(AT91_PIN_PA0, 0);	/* SPI0_MISO */
 		at91_set_A_periph(AT91_PIN_PA1, 0);	/* SPI0_MOSI */
-		at91_set_A_periph(AT91_PIN_PA2, 0);	/* SPI1_SPCK */
+		at91_set_A_periph(AT91_PIN_PA2, 0);	/* SPI0_SPCK */
 
 		at91_clock_associate("spi0_clk", &at91sam9260_spi0_device.dev, "spi_clk");
 		platform_device_register(&at91sam9260_spi0_device);
 	}
 	if (enable_spi1) {
-		/* swyss: passthrough checked */
 		at91_set_A_periph(AT91_PIN_PB0, 0);	/* SPI1_MISO */
 		at91_set_A_periph(AT91_PIN_PB1, 0);	/* SPI1_MOSI */
 		at91_set_A_periph(AT91_PIN_PB2, 0);	/* SPI1_SPCK */
@@ -1169,6 +1168,8 @@ static inline void configure_usart3_pins(unsigned pins)
 {
 	at91_set_A_periph(AT91_PIN_PB10, 1);		/* TXD3 */
 	at91_set_A_periph(AT91_PIN_PB11, 0);		/* RXD3 */
+
+	at91_set_gpio_output(AT91_PIN_PC29,0);		/* AVR Reset */
 
 	if (pins & ATMEL_UART_RTS)
 		at91_set_B_periph(AT91_PIN_PC8, 0);	/* RTS3 */

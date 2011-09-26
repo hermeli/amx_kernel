@@ -257,6 +257,14 @@ config SPI_TLE62X0
 	  sysfs interface, with each line presented as a kind of GPIO
 	  exposing both switch control and diagnostic feedback.
 
+config SPI_ICOC8
+	tristate "IC8 & OC8 support driver for AM-M" 
+	help
+   	  IC8 and OC8 are SPI peripherals of the AM-M that are controlled 
+          with additional signal lines, IOSTROBE, IOBACK and CS. This driver
+	  supports only these signals. The plain SPI communication must be done 
+	  with the spidev user driver.   
+
 #
 # Add new SPI protocol masters in alphabetical order above this line
 #

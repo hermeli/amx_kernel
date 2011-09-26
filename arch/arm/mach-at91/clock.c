@@ -158,11 +158,14 @@ static void pmc_uckr_mode(struct clk *clk, int is_on)
 }
 
 /* USB function clocks (PLLB must be 48 MHz) */
+/*
 static struct clk udpck = {
 	.name		= "udpck",
 	.parent		= &pllb,
 	.mode		= pmc_sys_mode,
 };
+*/
+
 static struct clk utmi_clk = {
 	.name		= "utmi_clk",
 	.parent		= &main_clk,
@@ -642,19 +645,19 @@ static void __init at91_pllb_usbfs_clock_init(unsigned long main_clock)
 	pllb.rate_hz = at91_pll_rate(&pllb, main_clock, at91_pllb_usb_init);
 	if (cpu_is_at91rm9200()) {
 		uhpck.pmc_mask = AT91RM9200_PMC_UHP;
-		udpck.pmc_mask = AT91RM9200_PMC_UDP;
+		//udpck.pmc_mask = AT91RM9200_PMC_UDP;
 		at91_sys_write(AT91_PMC_SCER, AT91RM9200_PMC_MCKUDP);
 	} else if (cpu_is_at91sam9260() || cpu_is_at91sam9261() ||
 		   cpu_is_at91sam9263() || cpu_is_at91sam9g20() ||
 		   cpu_is_at572d940hf() || cpu_is_at91sam9g10()) {
 		uhpck.pmc_mask = AT91SAM926x_PMC_UHP;
-		udpck.pmc_mask = AT91SAM926x_PMC_UDP;
+		//udpck.pmc_mask = AT91SAM926x_PMC_UDP;
 	} else if (cpu_is_at91cap9()) {
 		uhpck.pmc_mask = AT91CAP9_PMC_UHP;
 	}
 	at91_sys_write(AT91_CKGR_PLLBR, 0);
 
-	udpck.rate_hz = at91_usb_rate(&pllb, pllb.rate_hz, at91_pllb_usb_init);
+	//udpck.rate_hz = at91_usb_rate(&pllb, pllb.rate_hz, at91_pllb_usb_init);
 	uhpck.rate_hz = at91_usb_rate(&pllb, pllb.rate_hz, at91_pllb_usb_init);
 }
 
@@ -739,11 +742,14 @@ int __init at91_clock_init(unsigned long main_clock)
 	/*
 	 * USB FS clock init
 	 */
+	
+	/*	
 	if (cpu_has_pllb())
 		at91_pllb_usbfs_clock_init(main_clock);
 	if (cpu_has_upll())
-		/* assumes that we choose UPLL for USB and not PLLA */
+		// assumes that we choose UPLL for USB and not PLLA
 		at91_upll_usbfs_clock_init(main_clock);
+	*/
 
 	/*
 	 * MCK and CPU derive from one of those primary clocks.
@@ -777,8 +783,8 @@ int __init at91_clock_init(unsigned long main_clock)
 	if (cpu_has_uhp())
 		list_add_tail(&uhpck.node, &clocks);
 
-	if (cpu_has_udpfs())
-		list_add_tail(&udpck.node, &clocks);
+	//if (cpu_has_udpfs())
+	//	list_add_tail(&udpck.node, &clocks);
 
 	if (cpu_has_utmi())
 		list_add_tail(&utmi_clk.node, &clocks);
@@ -790,6 +796,14 @@ int __init at91_clock_init(unsigned long main_clock)
 		freq / 1000000, (unsigned) mck.rate_hz / 1000000,
 		(unsigned) main_clock / 1000000,
 		((unsigned) main_clock % 1000000) / 1000);
+
+	/* setup PLLB for AVR clock */
+	at91_sys_write(AT91_CKGR_PLLBR, 0x207F7F19); 	// PLLB baud rate setup
+
+	/* enable 16MHz AVR clock on PCK0 (from PLLB) */
+	at91_sys_write(AT91_PMC_SCDR,AT91_PMC_PCK0);	// disable programmable clock PCK0
+	at91_sys_write(AT91_PMC_PCKR(0),0x0000000F);	// PRES=div8 SCC=PLLB
+	at91_sys_write(AT91_PMC_SCER,AT91_PMC_PCK0);	// enable PCK0
 
 	return 0;
 }

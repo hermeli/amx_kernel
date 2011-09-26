@@ -140,28 +140,20 @@ static void __init at73c213_set_clk(struct at73c213_board_info *info) {}
  * SPI devices.
  */
 static struct spi_board_info ek_spi_devices[] = {
-
+	{
+		/* IC8 and OC8 peripherals */
+		.modalias 	= "spidev",
+		.chip_select	= 1,
+		.max_speed_hz 	= 15 * 1000 * 1000,
+		.bus_num	= 0,	
+	},
 	{ 	/* RTC chip */ 
 		.modalias	= "rtc-max6902",
 		.chip_select	= 2,
 		.max_speed_hz 	= 15 * 1000 * 1000,
 		.bus_num	= 1,
 	},
-
-/*
-#if defined(CONFIG_SND_AT73C213) || defined(CONFIG_SND_AT73C213_MODULE)
-	{	AT73C213 DAC 		
-		.modalias	= "at73c213",
-		.chip_select	= 0,
-		.max_speed_hz	= 10 * 1000 * 1000,
-		.bus_num	= 1,
-		.mode		= SPI_MODE_1,
-		.platform_data	= &at73c213_data,
-	},
-#endif
-*/
 };
-
 
 /*
  * MACB Ethernet device
@@ -352,6 +344,7 @@ static void __init ek_board_init(void)
 	/* shutdown controller, wakeup button (5 msec low) */
 	at91_sys_write(AT91_SHDW_MR, AT91_SHDW_CPTWK0_(10) | AT91_SHDW_WKMODE0_LOW
 				| AT91_SHDW_RTTWKEN);
+
 }
 
 MACHINE_START(AT91SAM9260EK, "Atmel AT91SAM9260-EK")
