@@ -23,7 +23,7 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include "icoc8.h"
-#include "/home/swyss/amx-kernel/include/linux/spi/spidev.h"
+#include "../../../include/linux/spi/spidev.h"
 
 static void pabort(const char *s)
 {
@@ -61,7 +61,7 @@ static struct spi_ioc_transfer tr = {		// SPI data tranfer structure
 
 static DRVMSG drvMsg;										// SPI control structure
 
-static uint8_t mode;
+static uint8_t mode = SPI_MODE_3;
 static uint8_t bits = 8;
 static uint32_t speed = 500000;
 
@@ -225,7 +225,6 @@ int count_nr_of_ic8(void)
 		if (rx[0]==IC8MODULE)
 			nrOfIC8++;
 		else {
-			printf("rx[0] = 0x%02x\n",rx[0]);
 			break;
 		}
 	}
@@ -265,16 +264,16 @@ int main(void)
 	setup_spi();
 
 	// *** count number of OC8 modules on SPI bus ***
-	// if (!count_nr_of_oc8()) 
-	//	return -1;
+	if (!count_nr_of_oc8()) 
+		return -1;
 
 	// *** count number of IC8 modules on SPI bus ***
 	if (!count_nr_of_ic8())
 		return -1;
 
 	// ***  display LED pattern on OC8 modules ***
-	// if (!display_oc8_patterns())
-	//	return -1;
+	if (!display_oc8_patterns())
+		return -1;
 
 	close(spidev);
 	close(icoc8);
