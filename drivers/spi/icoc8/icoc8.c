@@ -34,6 +34,8 @@ MODULE_LICENSE("GPL");
  * Private register addresses and bitmask definitions 
  *---------------------------------------------------------------------------*/
 #define BASE_AT91_PIOA	0xfffff400
+#define BASE_AT91_PIOC	0xfffff800
+
 #define PIO_PER					0x00
 #define PIO_OER					0x10
 #define PIO_ODR					0x14
@@ -41,13 +43,19 @@ MODULE_LICENSE("GPL");
 #define PIO_CODR				0x34	
 #define PIO_PDSR				0x3C
 
-#define IOSTROBE				(1<<4)
-#define IOBACK					(1<<5)
+#define IOSTROBE				(1<<4)		// PIOA
+#define IOBACK					(1<<5)		// PIOA
+
+#define NPCS00					(1<<3)		// PIOA
+#define NPCS01					(1<<11)		// PIOC
+#define NPCS02					(1<<16)		// PIOC
+#define NPCS03					(1<<17)		// PIOC
 
 /*-----------------------------------------------------------------------------
  * Global register access pointer
  *---------------------------------------------------------------------------*/
-static void * memBase;
+static void * basePioA;
+static void * basePioC;
 
 /*-----------------------------------------------------------------------------
  * forward function declaration
@@ -79,16 +87,30 @@ int icoc8_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsign
 		// **************** IOCTL_ICOC8_STROBE ****************
 		case IOCTL_ICOC8_STROBE:
 			
-			writel(IOSTROBE, memBase+PIO_CODR);
+			writel(IOSTROBE, basePioA+PIO_CODR);
 			udelay(100);
-			writel(IOSTROBE, memBase+PIO_SODR);
+			writel(IOSTROBE, basePioA+PIO_SODR);
 			break;
 	
 		// **************** IOCTL_ICOC8_GETIOBACK ****************
 		case IOCTL_ICOC8_GETIOBACK:
 	
-			drvMsg.ioback = ((readl(memBase+PIO_PDSR)&IOBACK)>0); 
+			drvMsg.ioback = ((readl(basePioA+PIO_PDSR)&IOBACK)>0); 
 			ret=copy_to_user((void*)arg,&drvMsg, sizeof(drvMsg));
+			break;
+
+		// **************** IOCTL_ICOC8_SETCS ****************
+		case IOCTL_ICOC8_SETCS:
+
+			// get driver message structure from user space
+			ret = copy_from_user(&drvMsg,(DRVMSG*)arg, sizeof(drvMsg));
+			if(ret)	
+				return -EFAULT;
+
+			writel(NPCS00,(drvMsg.chipsel & 0x01)?basePioA+PIO_SODR:basePioA+PIO_CODR);
+			writel(NPCS01,(drvMsg.chipsel & 0x02)?basePioC+PIO_SODR:basePioC+PIO_CODR);
+			writel(NPCS02,(drvMsg.chipsel & 0x04)?basePioC+PIO_SODR:basePioC+PIO_CODR);
+			writel(NPCS03,(drvMsg.chipsel & 0x08)?basePioC+PIO_SODR:basePioC+PIO_CODR);
 			break;
 
 		default:
@@ -105,7 +127,8 @@ int icoc8_init(void)
 	int res;
 
 	// register memory base 
-	memBase = ioremap_nocache(BASE_AT91_PIOA,0x200);
+	basePioA = ioremap_nocache(BASE_AT91_PIOA,0x200);
+	basePioC = ioremap_nocache(BASE_AT91_PIOC,0x200);
 
 	// Registering device node 
 	res = register_chrdev(ICOC8_MAJOR, "icoc8", &icoc8_fops);
@@ -114,11 +137,14 @@ int icoc8_init(void)
 		return res;
 	}
 
-	// setup IO ports
-	writel(IOSTROBE, memBase+PIO_PER);
-	writel(IOSTROBE, memBase+PIO_OER);
-	writel(IOBACK, memBase+PIO_PER);
-	writel(IOBACK, memBase+PIO_ODR);
+	// setup PIOA ports
+	writel(IOSTROBE|IOBACK|NPCS00, basePioA+PIO_PER);
+	writel(IOSTROBE|NPCS00, basePioA+PIO_OER);
+	writel(IOBACK, basePioA+PIO_ODR);
+
+	// setup PIOC ports
+	writel(NPCS01|NPCS02|NPCS03, basePioC+PIO_PER);
+	writel(NPCS01|NPCS02|NPCS03, basePioC+PIO_OER);
 
 	// everything initialized
 	printk("<0>icoc8: module initialized\n");
@@ -132,8 +158,8 @@ void icoc8_exit(void)
 {
 	unregister_chrdev(ICOC8_MAJOR, "icoc8");
 
-	/* unmap memBase */
-	iounmap(memBase);
+	/* unmap basePioA */
+	iounmap(basePioA);
 	
 	printk("<0>icoc8: module removed\n");
 }

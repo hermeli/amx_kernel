@@ -32,9 +32,20 @@ static void pabort(const char *s)
 }
 
 /*-----------------------------------------------------------------------------
+ * IC8 message defines
+ *---------------------------------------------------------------------------*/
+#define GET0					0x94
+#define GET1					0x75
+#define GET2					0x76
+#define GET3					0x57
+#define CLEARBUFFER		0x5E
+#define IC8MODULE			0x99
+#define RECIERR				0xF5 
+
+/*-----------------------------------------------------------------------------
  * static vars 
  *---------------------------------------------------------------------------*/
-static int icoc8, spidev, nrOfOC8 = 0;
+static int icoc8, spidev, nrOfOC8 = 0, nrOfIC8 = 0;
 
 static unsigned char tx[64];						// SPI transfer buffer
 static unsigned char rx[64];						// SPI receive buffer
@@ -126,6 +137,7 @@ int count_nr_of_oc8(void)
 	printf("Detected %d OC8 modules on the bus\r\n",nrOfOC8);
 	return 1;
 }
+
 /*-----------------------------------------------------------------------------
  * display_oc8_patterns() 
  *
@@ -138,7 +150,7 @@ int display_oc8_patterns()
    
 	while(count<24)
   {
-		// write pattern to OC8
+		// write pattern to OC8 buffer (multiple OC8 with same pattern)
 		memset(tx,(0x01<<(count++%8)),nrOfOC8);
 		
 		tr.len = nrOfOC8;
@@ -158,6 +170,68 @@ int display_oc8_patterns()
 		}
 		usleep(200000);
 	}
+}
+/*-----------------------------------------------------------------------------
+ * count_nr_of_ic8() 
+ *
+ * count up CS lines and query SPI bus to see how many IC8 reply.
+ *---------------------------------------------------------------------------*/
+int count_nr_of_ic8(void)
+{
+	int ret, i;
+
+	// detect number of IC8
+	for (i=0; i<15; i++)
+	{	
+		// setup the chip select  
+		drvMsg.chipsel = i;
+		ret = ioctl(icoc8, IOCTL_ICOC8_SETCS, &drvMsg);	
+		if (ret != 0)
+		{
+			printf("count_nr_of_ic8: IOCTL_ICOC8_SETCS failed (ret=%d)\n",ret);
+			return -1;
+		}
+
+		// send the CLEARBUFFER message
+		tx[0] = CLEARBUFFER;
+		tr.len = 1;
+		ret = ioctl(spidev, SPI_IOC_MESSAGE(1), &tr);
+		if (ret != 1)
+		{
+			printf("count_nr_of_ic8: SPI_IOC_MESSAGE failed (ret=%d).\n",ret);
+			return -1;
+		}	
+
+		// clock back the answer byte
+		tx[0] = 0;
+		tr.len = 1;
+		ret = ioctl(spidev, SPI_IOC_MESSAGE(1), &tr);
+		if (ret != 1)
+		{
+			printf("count_nr_of_ic8: SPI_IOC_MESSAGE failed (ret=%d).\n",ret);
+			return -1;
+		}	
+	
+		// reset the chip select  
+		drvMsg.chipsel = 0xF;
+		ret = ioctl(icoc8, IOCTL_ICOC8_SETCS, &drvMsg);	
+		if (ret != 0)
+		{
+			printf("count_nr_of_ic8: IOCTL_ICOC8_SETCS failed (ret=%d)\n",ret);
+			return -1;
+		}
+		
+		// update IC8 counter
+		if (rx[0]==IC8MODULE)
+			nrOfIC8++;
+		else {
+			printf("rx[0] = 0x%02x\n",rx[0]);
+			break;
+		}
+	}
+	
+	printf("Detected %d IC8 modules on the bus\r\n",nrOfIC8);
+	return 1;
 }
 /*-----------------------------------------------------------------------------
  * main program function 
@@ -191,12 +265,16 @@ int main(void)
 	setup_spi();
 
 	// *** count number of OC8 modules on SPI bus ***
-	if (!count_nr_of_oc8()) 
+	// if (!count_nr_of_oc8()) 
+	//	return -1;
+
+	// *** count number of IC8 modules on SPI bus ***
+	if (!count_nr_of_ic8())
 		return -1;
-	
-	// ***  (OC8) ***
-	if (!display_oc8_patterns())
-		return -1;
+
+	// ***  display LED pattern on OC8 modules ***
+	// if (!display_oc8_patterns())
+	//	return -1;
 
 	close(spidev);
 	close(icoc8);

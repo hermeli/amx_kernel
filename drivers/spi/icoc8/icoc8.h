@@ -32,6 +32,7 @@ typedef struct _DRVMSG
 #define ICOC8_MAGIC							'k'
 #define IOCTL_ICOC8_STROBE 			_IOWR(ICOC8_MAGIC, 0, int)
 #define IOCTL_ICOC8_GETIOBACK		_IOWR(ICOC8_MAGIC, 1, int)
+#define IOCTL_ICOC8_SETCS				_IOWR(ICOC8_MAGIC, 2, int)
 
 #ifdef __cplusplus
 } /* extern "C"*/
