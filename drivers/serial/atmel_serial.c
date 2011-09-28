@@ -588,6 +588,11 @@ static void atmel_tx_dma(struct uart_port *port)
 		count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 		pdc->ofs = count;
 
+		if(UART_GET_MR(port) & ATMEL_US_MODE9)
+		{
+			count /= 2;
+		}
+
 		UART_PUT_TPR(port, pdc->dma_addr + xmit->tail);
 		UART_PUT_TCR(port, count);
 		/* re-enable PDC transmit and interrupts */
