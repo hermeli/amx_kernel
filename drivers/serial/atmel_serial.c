@@ -460,10 +460,6 @@ atmel_handle_receive(struct uart_port *port, unsigned int pending)
 {
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
 
-	if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-		printk("<0>++ atmel_handle_receive\n");
-	}
-
 	if (atmel_use_dma_rx(port)) {
 		/*
 		 * PDC receive. Just schedule the tasklet and let it
@@ -473,10 +469,6 @@ atmel_handle_receive(struct uart_port *port, unsigned int pending)
 		 * the moment.
 		 */
 		if (pending & (ATMEL_US_ENDRX | ATMEL_US_TIMEOUT)) {
-
-			if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-				printk("<0> -> ATMEL_US_ENDRX | ATMEL_US_TIMEOUT\n");
-			}
 			UART_PUT_IDR(port, (ATMEL_US_ENDRX
 						| ATMEL_US_TIMEOUT));
 			tasklet_schedule(&atmel_port->tasklet);
@@ -508,10 +500,6 @@ static void
 atmel_handle_transmit(struct uart_port *port, unsigned int pending)
 {
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-
-	if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-		printk("<0>++ atmel_handle_transmit\n");
-	}
 
 	if (atmel_use_dma_tx(port)) {
 		/* PDC transmit */
@@ -695,10 +683,6 @@ static void atmel_rx_from_dma(struct uart_port *port)
 	unsigned int count;
 	int copied;
 
-	if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-		printk("<0>++ atmel_rx_from_dma (idx: %d)\n", rx_idx);
-	}
-
 	do {
 		/* Reset the UART timeout early so that we don't miss one */
 		UART_PUT_CR(port, ATMEL_US_STTTO);
@@ -706,10 +690,6 @@ static void atmel_rx_from_dma(struct uart_port *port)
 		pdc = &atmel_port->pdc_rx[rx_idx];
 		head = UART_GET_RPR(port) - pdc->dma_addr;
 		tail = pdc->ofs;
-
-		if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-			printk("<0> -> head: %d, tail: %d, ofs: %d\n", head, tail, pdc->ofs);
-		}
 
 		/* If the PDC has switched buffers, RPR won't contain
 		 * any address within the current buffer. Since head
@@ -737,10 +717,6 @@ static void atmel_rx_from_dma(struct uart_port *port)
 
 			copied = tty_insert_flip_string(tty, pdc->buf + pdc->ofs, count);
 
-			if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-				printk("<0> -> head: %d, tail: %d, count: %d, copied: %d\n", head, tail, count, copied);
-			}
-
 			dma_sync_single_for_device(port->dev, pdc->dma_addr,
 					pdc->dma_size, DMA_FROM_DEVICE);
 
@@ -752,10 +728,16 @@ static void atmel_rx_from_dma(struct uart_port *port)
 		 * If the current buffer is full, we need to check if
 		 * the next one contains any additional data.
 		 */
-		if (head >= pdc->dma_size) {
+		if (head >= pdc->dma_size) {			
 			pdc->ofs = 0;
 			UART_PUT_RNPR(port, pdc->dma_addr);
-			UART_PUT_RNCR(port, pdc->dma_size);
+			
+			if(unlikely(UART_GET_MR(port) & ATMEL_US_MODE9)) {
+				UART_PUT_RNCR(port, pdc->dma_size / 2);
+			}
+			else {
+				UART_PUT_RNCR(port, pdc->dma_size);
+			}
 
 			rx_idx = !rx_idx;
 			atmel_port->pdc_rx_idx = rx_idx;
@@ -782,10 +764,6 @@ static void atmel_tasklet_func(unsigned long data)
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
 	unsigned int status;
 	unsigned int status_change;
-
-	if ((unsigned int)(port->mapbase) == AT91SAM9260_BASE_US3) {
-		printk("<0>++ atmel_tasklet_func\n");
-	}
 
 	/* The interrupt handler does not take the lock */
 	spin_lock(&port->lock);
@@ -1161,6 +1139,9 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 		mode = ATMEL_US_USMODE_NORMAL|ATMEL_US_USCLKS_MCK|ATMEL_US_CHRL_8
 			| ATMEL_US_MODE9|ATMEL_US_OVER
 			| ATMEL_US_PAR_NONE|ATMEL_US_NBSTOP_1|ATMEL_US_CHMODE_NORMAL;
+			
+		UART_PUT_RCR(port, PDC_BUFFER_SIZE/2);
+		UART_PUT_RNCR(port, PDC_BUFFER_SIZE/2);
 
 		UART_PUT_BRGR(port, 135);
 	} else {
@@ -1327,8 +1308,9 @@ static void __devinit atmel_init_port(struct atmel_uart_port *atmel_port,
 
 	atmel_port->use_dma_rx = data->use_dma_rx;
 	atmel_port->use_dma_tx = data->use_dma_tx;
-	if (atmel_use_dma_tx(port))
-		port->fifosize = PDC_BUFFER_SIZE;	
+	if (atmel_use_dma_tx(port)){
+		port->fifosize = PDC_BUFFER_SIZE;
+	}
 }
 
 /*
