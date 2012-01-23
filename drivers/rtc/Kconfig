@@ -342,6 +342,15 @@ config RTC_DRV_MAX6902
 	  This driver can also be built as a module. If so, the module
 	  will be called rtc-max6902.
 
+config RTC_DRV_DS1391_MAX6902
+	tristate "Maxim/Dallas DS1391 and MAX6902 (autoprobe)"
+	help
+	  If you say yes here you will get support for the
+	  Maxim/Dallas DS1390 and MAX6902 SPI RTC chip.
+
+	  This driver can also be built as a module. If so, the module
+	  will be called rtc-ds1391-max6902.
+
 config RTC_DRV_R9701
 	tristate "Epson RTC-9701JE"
 	help

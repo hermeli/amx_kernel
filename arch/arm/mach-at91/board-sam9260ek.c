@@ -147,12 +147,12 @@ static struct spi_board_info ek_spi_devices[] = {
 		.max_speed_hz 	= 15 * 1000 * 1000,
 		.bus_num	= 0,	
 	},
-	{ 	/* RTC chip */ 
-		.modalias	= "rtc-max6902",
+	{ 	/* RTC chip DS1391 & MAX6902 */ 
+		.modalias	= "rtc-ds1391-max6902",
 		.chip_select	= 2,
 		.max_speed_hz 	= 15 * 1000 * 1000,
 		.bus_num	= 1,
-	},
+	},	
 };
 
 /*
