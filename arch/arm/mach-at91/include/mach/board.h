@@ -39,6 +39,27 @@
 #include <linux/usb/atmel_usba_udc.h>
 #include <linux/atmel-mci.h>
 #include <sound/atmel-ac97c.h>
+#include <mach/gpio.h>
+
+/* Kaba platform type */
+#define AMM 'M'
+#define AML 'L'
+
+static inline unsigned long at91_platform_type(void)
+{	
+	at91_set_gpio_input(AT91_PIN_PC30,1);	
+	at91_set_gpio_input(AT91_PIN_PC31,1);
+	
+	if (at91_get_gpio_value(AT91_PIN_PC31))
+	{
+		if (at91_get_gpio_value(AT91_PIN_PC30))
+			return 0;	// board not supported
+		else
+			return AML;	// Access Manager LEGIC
+	} 
+	else
+		return AMM;		// Access Manager MIFARE
+}
 
  /* USB Device */
 struct at91_udc_data {

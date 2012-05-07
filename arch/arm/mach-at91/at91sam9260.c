@@ -235,14 +235,12 @@ static struct clk *periph_clocks[] __initdata = {
  * The two programmable clocks.
  * You must configure pin multiplexing to bring these signals out.
  */
-/*
 static struct clk pck0 = {
 	.name		= "pck0",
 	.pmc_mask	= AT91_PMC_PCK0,
 	.type		= CLK_TYPE_PROGRAMMABLE,
 	.id		= 0,
 };
-*/
 static struct clk pck1 = {
 	.name		= "pck1",
 	.pmc_mask	= AT91_PMC_PCK1,
@@ -257,7 +255,7 @@ static void __init at91sam9260_register_clocks(void)
 	for (i = 0; i < ARRAY_SIZE(periph_clocks); i++)
 		clk_register(periph_clocks[i]);
 
-	//clk_register(&pck0);
+	clk_register(&pck0);
 	clk_register(&pck1);
 }
 

@@ -912,7 +912,7 @@ static inline void configure_ssc_pins(unsigned pins)
 	if (pins & ATMEL_SSC_TD)
 		at91_set_A_periph(AT91_PIN_PB18, 1);
 	if (pins & ATMEL_SSC_RD)
-		at91_set_A_periph(AT91_PIN_PB19, 1);
+		// at91_set_A_periph(AT91_PIN_PB19, 1);
 	if (pins & ATMEL_SSC_RK)
 		at91_set_A_periph(AT91_PIN_PB20, 1);
 	if (pins & ATMEL_SSC_RF)
@@ -1324,7 +1324,7 @@ void __init at91_add_device_serial(void)
 		printk(KERN_INFO "AT91: No default serial console defined.\n");
 
 	/* enable clock out on PB30 (AVR clock) */
-	at91_set_A_periph(AT91_PIN_PB30,0);
+	// at91_set_A_periph(AT91_PIN_PB30,0);
 }
 #else
 void __init at91_register_uart(unsigned id, unsigned portnr, unsigned pins) {}

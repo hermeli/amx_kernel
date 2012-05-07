@@ -150,6 +150,9 @@ struct atmel_uart_port {
 };
 
 static struct atmel_uart_port atmel_ports[ATMEL_MAX_UART];
+static struct clk *tc5_clk;			/* TC5 clock for AM-L */
+static struct clk *pck0;			/* PCK0 clock for AM-M */
+static struct clk *pllb;			/* PLLB */
 
 #ifdef SUPPORT_SYSRQ
 static struct console atmel_console;
@@ -913,6 +916,32 @@ static int atmel_startup(struct uart_port *port)
 		UART_PUT_IER(port, ATMEL_US_RXRDY);
 	}
 
+	/* although the bootstrap code initializes the AVR clock properly,
+	   we must tell the kernel to use the clock, or it will be disabled. */ 
+	
+	if (at91_platform_type() == AMM)
+	{
+		printk("<0>atmel_serial: AM-M (PLLB = 128 MHz, AVR clk = PCK0 = 16 MHz)\n");
+		
+		// AVR clock on AM-M
+		pck0 = clk_get(NULL,"pck0");
+		if (IS_ERR(pck0)) {
+			printk(KERN_ERR "atmel_serial: pck0 not defined!\n");
+			return -ENODEV;
+		}
+		clk_enable(pck0);
+	}
+	else	// AML
+	{
+		printk("<0>atmel_serial: AM-L (AVR clk = T5 = 15 MHz)\n");
+		// AVR clock on AM-L
+		tc5_clk = clk_get(NULL,"tc5_clk");
+		if (IS_ERR(tc5_clk)) {
+			printk(KERN_ERR "atmel_serial: tc5_clk not defined!\n");
+			return -ENODEV;
+		}
+		clk_enable(tc5_clk);
+	}
 	return 0;
 }
 
