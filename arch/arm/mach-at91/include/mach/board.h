@@ -35,6 +35,7 @@
 #include <linux/device.h>
 #include <linux/i2c.h>
 #include <linux/leds.h>
+#include <linux/delay.h>
 #include <linux/spi/spi.h>
 #include <linux/usb/atmel_usba_udc.h>
 #include <linux/atmel-mci.h>
@@ -50,6 +51,7 @@ static inline unsigned long at91_platform_type(void)
 	at91_set_gpio_input(AT91_PIN_PC30,1);	
 	at91_set_gpio_input(AT91_PIN_PC31,1);
 	
+	udelay(10);
 	if (at91_get_gpio_value(AT91_PIN_PC31))
 	{
 		if (at91_get_gpio_value(AT91_PIN_PC30))

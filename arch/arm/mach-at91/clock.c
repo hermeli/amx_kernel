@@ -27,6 +27,7 @@
 #include <mach/hardware.h>
 #include <mach/at91_pmc.h>
 #include <mach/cpu.h>
+#include <mach/board.h>
 
 #include "clock.h"
 #include "generic.h"
@@ -375,7 +376,6 @@ int clk_set_rate(struct clk *clk, unsigned long rate)
 	unsigned	prescale;
 	unsigned long	actual;
 
-	printk("<0>desired rate is %d\n",rate);
 	if (!clk_is_programmable(clk))
 		return -EINVAL;
 	if (clk->users)
@@ -642,7 +642,17 @@ static void __init at91_pllb_usbfs_clock_init(unsigned long main_clock)
 	 */
 	uhpck.parent = &pllb;
 
-	at91_pllb_usb_init = at91_pll_calc(main_clock, 128000000);
+	if (at91_platform_type() == AMM)
+	{
+		at91_pllb_usb_init = at91_pll_calc(main_clock, 128000000);
+		printk("Clocks: platform is AM-M\n");
+	}	
+	else	// AM-L has USB
+	{	
+		at91_pllb_usb_init = at91_pll_calc(main_clock, 48000000 * 2) | AT91_PMC_USB96M;	
+		printk("Clocks: platform is AM-L\n");
+	}
+
 	pllb.rate_hz = at91_pll_rate(&pllb, main_clock, at91_pllb_usb_init);
 	if (cpu_is_at91rm9200()) {
 		uhpck.pmc_mask = AT91RM9200_PMC_UHP;

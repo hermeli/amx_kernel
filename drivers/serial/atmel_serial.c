@@ -152,7 +152,6 @@ struct atmel_uart_port {
 static struct atmel_uart_port atmel_ports[ATMEL_MAX_UART];
 static struct clk *tc5_clk;			/* TC5 clock for AM-L */
 static struct clk *pck0;			/* PCK0 clock for AM-M */
-static struct clk *pllb;			/* PLLB */
 
 #ifdef SUPPORT_SYSRQ
 static struct console atmel_console;
@@ -921,7 +920,7 @@ static int atmel_startup(struct uart_port *port)
 	
 	if (at91_platform_type() == AMM)
 	{
-		printk("<0>atmel_serial: AM-M (PLLB = 128 MHz, AVR clk = PCK0 = 16 MHz)\n");
+		printk("<0>atmel_serial: AM-M (AVR clock from PLLB)\n");
 		
 		// AVR clock on AM-M
 		pck0 = clk_get(NULL,"pck0");
@@ -933,7 +932,7 @@ static int atmel_startup(struct uart_port *port)
 	}
 	else	// AML
 	{
-		printk("<0>atmel_serial: AM-L (AVR clk = T5 = 15 MHz)\n");
+		printk("<0>atmel_serial: AM-L (AVR clock from Timer5)\n");
 		// AVR clock on AM-L
 		tc5_clk = clk_get(NULL,"tc5_clk");
 		if (IS_ERR(tc5_clk)) {
