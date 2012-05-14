@@ -4,6 +4,15 @@
 
 menu "Character devices"
 
+config AMX_DRIVER
+	tristate "Enable AMx system driver for AMx platform"
+	default y
+	---help---
+	This is the system driver for the AMx platform. It controls
+	things like LEGIC chip TX_READY signal and RESET signal. You will
+	need this driver when your AMx board has RFID antennas equipped.
+	If unsure, say Y.
+
 config LEDOUT
 	tristate "Enable LEDOUT driver for AMM"
 	default M
