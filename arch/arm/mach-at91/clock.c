@@ -634,6 +634,8 @@ static struct clk *const standard_pmc_clocks[] __initdata = {
 /* PLLB generated USB full speed clock init */
 static void __init at91_pllb_usbfs_clock_init(unsigned long main_clock)
 {
+	char boardtype=0;
+	
 	/*
 	 * USB clock init:  choose 48 MHz PLLB value,
 	 * disable 48MHz clock during usb peripheral suspend.
@@ -642,15 +644,26 @@ static void __init at91_pllb_usbfs_clock_init(unsigned long main_clock)
 	 */
 	uhpck.parent = &pllb;
 
-	if (at91_platform_type() == AMM)
+	boardtype = at91_platform_type();
+	if (boardtype == AMM)
 	{
 		at91_pllb_usb_init = at91_pll_calc(main_clock, 128000000);
 		printk("Clocks: platform is AM-M\n");
 	}	
-	else	// AM-L has USB
+	else if (boardtype == AML) 
 	{	
+		// AM-L has USB
 		at91_pllb_usb_init = at91_pll_calc(main_clock, 48000000 * 2) | AT91_PMC_USB96M;	
 		printk("Clocks: platform is AM-L\n");
+	}
+	else if (boardtype == AM3)
+	{
+		at91_pllb_usb_init = at91_pll_calc(main_clock, 128000000);
+		printk("Clocks: platform is AM300\n");
+	}
+	else
+	{
+		panic("Clocks: board type not supported!\n");
 	}
 
 	pllb.rate_hz = at91_pll_rate(&pllb, main_clock, at91_pllb_usb_init);

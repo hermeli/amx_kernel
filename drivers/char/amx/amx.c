@@ -2,7 +2,7 @@
 /******************************************************************************
  * amx.c
  *
- * Driver for Access Manager LEGIC/MIFARE system (special functions)
+ * Driver for Access Manager LEGIC/MIFARE Boards (special functions)
  *
  * Copyright (C) 2012 KABA AG, MIC AWM
  *
@@ -27,7 +27,7 @@
 #include "amx.h"
 
 MODULE_AUTHOR("stefan.wyss@kaba.com");
-MODULE_DESCRIPTION("Driver for Access Manager system");
+MODULE_DESCRIPTION("Driver for Access Manager Boards");
 MODULE_LICENSE("GPL");
 
 /*-----------------------------------------------------------------------------
@@ -98,14 +98,17 @@ int amx_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned
 		// **************** IOCTL_AMX_GET ****************
 		case IOCTL_AMX_GET:		
 			
-			if (board == AML)
+			switch (board)
 			{
-				drvMsg.nres = ((readl(piocBase+PIO_PDSR)&LG_NRES)>0);
-				drvMsg.txrdy = ((readl(piocBase+PIO_PDSR)&LG_TXRDY)>0);
-			} 
-			else // AMM
-			{
-				drvMsg.nres = ((readl(piocBase+PIO_PDSR)&SC_NRES)>0);
+				case AML:
+					drvMsg.nres = ((readl(piocBase+PIO_PDSR)&LG_NRES)>0);
+					drvMsg.txrdy = ((readl(piocBase+PIO_PDSR)&LG_TXRDY)>0);
+					break;
+				case AMM:
+					drvMsg.nres = ((readl(piocBase+PIO_PDSR)&SC_NRES)>0);
+					break;
+				default:
+					return -EFAULT;
 			}
 			ret=copy_to_user((void*)arg,&drvMsg, sizeof(drvMsg));
 			if (ret!=0)
@@ -120,10 +123,17 @@ int amx_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned
 			if(ret)	
 				return -EFAULT;
 
-			if(board == AML)
-				writel(LG_NRES,(drvMsg.nres)?piocBase+PIO_SODR:piocBase+PIO_CODR);
-			else
-				writel(SC_NRES,(drvMsg.nres)?piocBase+PIO_SODR:piocBase+PIO_CODR);
+			switch (board)
+			{
+				case AML:
+					writel(LG_NRES,(drvMsg.nres)?piocBase+PIO_SODR:piocBase+PIO_CODR);
+					break;
+				case AMM:
+					writel(SC_NRES,(drvMsg.nres)?piocBase+PIO_SODR:piocBase+PIO_CODR);
+					break;
+				default:
+					return -EFAULT;
+			}		
 			break;
 
 		default:
@@ -172,7 +182,7 @@ int amx_init(void)
 	if (readl(piocBase+PIO_PDSR)&SC_NRES)
 	{
 		if (readl(piocBase+PIO_PDSR)&LG_NRES)
-			panic("board type not supported!\n");	
+			board = AM3;	
 		else
 			board = AML;			
 	} 
@@ -182,9 +192,12 @@ int amx_init(void)
 	// everything initialized
 	if (board==AMM)
 		printk("<0>amx: module initialized - board type is AM-M\n");
-	else
+	else if (board==AML)
 		printk("<0>amx: module initialized - board type is AM-L\n");
-	
+	else if (board==AM3) 
+		printk("<0>amx: module initialized - board type is AM300\n");
+	else
+		panic("amx: board type not supported!\n");
 	return 0;
 }
 

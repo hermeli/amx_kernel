@@ -918,7 +918,7 @@ static int atmel_startup(struct uart_port *port)
 	/* although the bootstrap code initializes the AVR clock properly,
 	   we must tell the kernel to use the clock, or it will be disabled. */ 
 	
-	if (at91_platform_type() == AMM)
+	if (at91_platform_type()==AMM)
 	{
 		printk("<0>atmel_serial: AM-M (AVR clock from PLLB)\n");
 		
@@ -930,7 +930,7 @@ static int atmel_startup(struct uart_port *port)
 		}
 		clk_enable(pck0);
 	}
-	else	// AML
+	else if (at91_platform_type()==AML)
 	{
 		printk("<0>atmel_serial: AM-L (AVR clock from Timer5)\n");
 		// AVR clock on AM-L
@@ -940,6 +940,23 @@ static int atmel_startup(struct uart_port *port)
 			return -ENODEV;
 		}
 		clk_enable(tc5_clk);
+	}
+	else if (at91_platform_type()==AM3)
+	{
+		printk("<0>atmel_serial: AM300 (AVR clock from PLLB)\n");
+		
+		// AVR clock on AM300
+		pck0 = clk_get(NULL,"pck0");
+		if (IS_ERR(pck0)) {
+			printk(KERN_ERR "atmel_serial: pck0 not defined!\n");
+			return -ENODEV;
+		}
+		clk_enable(pck0);
+	}
+	else
+	{
+		printk(KERN_ERR "atmel_serial: board type not defined!\n");
+		return -ENODEV;
 	}
 	return 0;
 }

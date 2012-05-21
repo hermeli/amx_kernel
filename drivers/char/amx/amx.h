@@ -2,7 +2,7 @@
 /******************************************************************************
  * amx.h
  *
- * Driver for Access Manager LEGIC/MIFARE system (special functions)
+ * Driver for Access Manager LEGIC/MIFARE Boards (special functions)
  *
  * Copyright (C) 2012 KABA AG, MIC AWM
  *
@@ -23,13 +23,15 @@ extern "C" {
 
 #define AML 'L'
 #define AMM	'M'
+#define AM3 '3'
 
 // Driver data transfer structure
 typedef struct _DRVMSG
 {
 	unsigned char	nres;			// Legic/Security chip reset*
 	unsigned char	txrdy;			// Legic TX_READY
-	char 			board;			// 'L' => AM-L oder 'M' => AM-M
+	char 			board;			// 'L' => AM-L or 'M' => AM-M or
+									// '3' => AM300
 } DRVMSG;
 
 // Bitmask definitions for PINS

@@ -45,17 +45,18 @@
 /* Kaba platform type */
 #define AMM 'M'
 #define AML 'L'
+#define AM3 '3'
 
 static inline unsigned long at91_platform_type(void)
 {	
 	at91_set_gpio_input(AT91_PIN_PC30,1);	
 	at91_set_gpio_input(AT91_PIN_PC31,1);
 	
-	udelay(10);
+	udelay(1000);
 	if (at91_get_gpio_value(AT91_PIN_PC31))
 	{
 		if (at91_get_gpio_value(AT91_PIN_PC30))
-			return 0;	// board not supported
+			return AM3;	// AM300
 		else
 			return AML;	// Access Manager LEGIC
 	} 
