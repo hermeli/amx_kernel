@@ -332,14 +332,14 @@ void __init at91sam9260_initialize(unsigned long main_clock)
 	at91_extern_irq = (1 << AT91SAM9260_ID_IRQ0) | (1 << AT91SAM9260_ID_IRQ1)
 			| (1 << AT91SAM9260_ID_IRQ2);
 
-	/* Register GPIO subsystem */
-	at91_gpio_init(at91sam9260_gpio, 3);
-
 	/* Init clock subsystem */
 	at91_clock_init(main_clock);
 
 	/* Register the processor-specific clocks */
 	at91sam9260_register_clocks();
+
+	/* Register GPIO subsystem */
+	at91_gpio_init(at91sam9260_gpio, 3);
 }
 
 /* --------------------------------------------------------------------
